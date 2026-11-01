@@ -56,8 +56,8 @@ const K = {
   zon: reeks([[0, '#FFF6E0'], [.38, '#FFE2B0'], [.6, '#FF9F60'], [.7, '#E8603C'], [1, '#E8603C']]),
   hemel: reeks([[0, '#CFE3F5'], [.38, '#F3DCC8'], [.6, '#C98AA0'], [.72, '#5A4377'], [.84, '#3A3A70'], [1, '#2E3462']]),
   grondLicht: reeks([[0, '#6F7F4E'], [.6, '#5A4A48'], [1, '#20223C']]),
-  waterDiep: reeks([[0, '#2E5A70'], [.38, '#2F5670'], [.6, '#3A3866'], [.72, '#241E48'], [.84, '#0E0D26'], [1, '#05061A']]),
-  waterLicht: reeks([[0, '#7FA9BE'], [.38, '#A9B9C2'], [.6, '#E19A86'], [.72, '#94597C'], [.84, '#3A2A55'], [1, '#1E1D40']])
+  waterDiep: reeks([[0, '#1F3E4E'], [.38, '#22414F'], [.6, '#3A3866'], [.72, '#241E48'], [.84, '#0E0D26'], [1, '#05061A']]),
+  waterLicht: reeks([[0, '#4F7484'], [.38, '#6A808A'], [.6, '#E19A86'], [.72, '#94597C'], [.84, '#3A2A55'], [1, '#1E1D40']])
 };
 
 /* =====================================================================
@@ -74,14 +74,14 @@ catch (e) {
 renderer.setPixelRatio(Math.min(devicePixelRatio || 1, klein ? 1.5 : 1.75));
 renderer.setSize(innerWidth, innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.AgXToneMapping; // fotografischer dan 'neutraal'
+renderer.toneMapping = THREE.ACESFilmicToneMapping; // fotografisch contrast
 renderer.toneMappingExposure = 1.05;
 renderer.shadowMap.enabled = !klein;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 houder.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0xE8EEF2, 180, 1100);
+scene.fog = new THREE.Fog(0xE8EEF2, 260, 1500);
 const camera = new THREE.PerspectiveCamera(klein ? 55 : 45, innerWidth / innerHeight, .1, 3000);
 camera.position.set(160, 130, 200);
 
@@ -352,7 +352,7 @@ const landStuk = (shape, hoogte, materiaal, bevel = 1.2) => {
 const waterMat = new THREE.ShaderMaterial({
   uniforms: {
     tijd: { value: 0 }, diep: { value: kleur('#2E5A70') }, licht: { value: kleur('#7FA9BE') }, lucht: { value: kleur('#E8EEF2') },
-    zonRichting: { value: new THREE.Vector3(0, 1, 0) }, zonKleur: { value: kleur('#ffffff') }, glans: { value: 1 },
+    zonRichting: { value: new THREE.Vector3(0, 1, 0) }, zonKleur: { value: kleur('#ffffff') }, glans: { value: 1 }, boven: { value: luchtMat.uniforms.boven.value },
     fogColor: { value: new THREE.Color() }, fogNear: { value: 1 }, fogFar: { value: 1000 }
   },
   fog: true,
@@ -361,9 +361,10 @@ const waterMat = new THREE.ShaderMaterial({
     void main(){ vec4 w = modelMatrix*vec4(position,1.); vW = w.xyz; vec4 mvPosition = viewMatrix*w; gl_Position = projectionMatrix*mvPosition;
     #include <fog_vertex>
     }`,
-  fragmentShader: `uniform float tijd; uniform vec3 diep; uniform vec3 licht; uniform vec3 lucht; uniform vec3 zonRichting; uniform vec3 zonKleur; uniform float glans; varying vec3 vW;
+  fragmentShader: `uniform float tijd; uniform vec3 diep; uniform vec3 licht; uniform vec3 lucht; uniform vec3 zonRichting; uniform vec3 zonKleur; uniform float glans; uniform vec3 boven; varying vec3 vW;
     #include <fog_pars_fragment>
-    float golf(vec2 p){ return sin(p.x*.35 + tijd*1.1) * .5 + sin(p.y*.42 - tijd*.9 + p.x*.12) * .35 + sin((p.x+p.y)*.9 + tijd*1.7)*.15; }
+    float golf(vec2 p){ return sin(p.x*.35 + tijd*1.1) * .5 + sin(p.y*.42 - tijd*.9 + p.x*.12) * .35 + sin((p.x+p.y)*.9 + tijd*1.7)*.15
+      + sin(p.x*2.3 - p.y*1.7 + tijd*2.3)*.06 + sin(p.y*3.1 + p.x*.7 - tijd*2.9)*.05; }
     void main(){
       vec2 p = vW.xz;
       float e = .6;
@@ -371,8 +372,9 @@ const waterMat = new THREE.ShaderMaterial({
       vec3 v = normalize(cameraPosition - vW);
       float fres = pow(1. - max(dot(n, v), 0.), 3.);
       vec3 c = mix(diep, licht, .35 + .25*golf(p*.25));
-      c = mix(c, lucht, clamp(fres*.85, 0., .85));
       vec3 r = reflect(-v, n);
+      vec3 spiegel = mix(lucht, boven, clamp(r.y * 2.2, 0., 1.));
+      c = mix(c, spiegel, clamp(.08 + fres * .75, 0., .8));
       float s = pow(max(dot(r, normalize(zonRichting)), 0.), 220.);
       c += zonKleur * s * 2.2 * glans;
       float rim = smoothstep(.985, 1., sin(p.x*.8 + p.y*.25 + tijd*.8)*sin(p.y*.6 - tijd*.5));
@@ -1171,14 +1173,14 @@ const zetTijd = (t) => {
   const zd = new THREE.Vector3(Math.cos(zonHoek) * Math.sin(zonAz), Math.sin(zonHoek), Math.cos(zonHoek) * Math.cos(zonAz)).normalize();
   zon.position.copy(zd).multiplyScalar(300); zon.target.position.set(0, 0, 0);
   const dag = 1 - glad(.55, .78, t);
-  zon.intensity = 2.6 * dag + .7 * glad(.8, 1, t);
+  zon.intensity = 3.4 * dag + .7 * glad(.8, 1, t);
   opTijd(K.zon, t, zon.color);
   if (t > .78) zon.color.lerp(kleur('#9AA8D8'), glad(.78, .95, t));
   // maan staat in het oosten
   const md = new THREE.Vector3(.55, lerp(-.05, .42, glad(.66, 1, t)), -.8).normalize();
   if (t > .8) { zon.position.copy(md).multiplyScalar(300); }
   hemel.intensity = lerp(.45, .9, glad(.5, 1, t));
-  scene.environmentIntensity = lerp(.9, .25, glad(.55, .85, t));
+  scene.environmentIntensity = lerp(.55, .2, glad(.55, .85, t));
   opTijd(K.hemel, t, hemel.color); opTijd(K.grondLicht, t, hemel.groundColor);
   opTijd(K.luchtBoven, t, luchtMat.uniforms.boven.value);
   opTijd(K.horizon, t, luchtMat.uniforms.horizon.value);
@@ -1206,7 +1208,7 @@ const zetTijd = (t) => {
   L1.top.material.opacity = aan; L1.rood.material.opacity = aan; L1.groen.material.opacity = aan; L1.toplamp.intensity = aan * 6;
   kampvuur.userData.licht.intensity = aan * 30; kampvuur.userData.g.material.opacity = aan * .9; kampvuur.userData.vlam.visible = aan > .05;
   for (const a of autos) { a.userData.voor.material.color.set(aan > .3 ? '#FFF6D0' : '#D8D4C8'); }
-  renderer.toneMappingExposure = lerp(1.05, 1.25, glad(.6, 1, t));
+  renderer.toneMappingExposure = lerp(.95, 1.2, glad(.6, 1, t));
   html.style.setProperty('--nacht', t.toFixed(3));
   html.classList.toggle('is-avond', t > .55 && t <= .72);
   html.classList.toggle('is-nacht', t > .72);
