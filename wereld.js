@@ -325,6 +325,7 @@ const gloed = (k, maat) => {
    Vorm van de plas en eilanden overgenomen van de satellietfoto.
    ===================================================================== */
 const PLAS = [[-185, -240], [-40, -244], [120, -246], [230, -232], [280, -190], [285, -90], [250, -62], [150, -52], [80, -47], [30, -43], [-10, -41], [-37, -38], [-38, -10], [-37.5, 12], [-36.3, 13], [-36.3, 22.5], [-43, 22.5], [-44, 13.5], [-60, 13], [-110, 9], [-150, 7], [-186, 5], [-186, -134], [-150, -137], [-149, -159], [-186, -162]];
+const inPolygoon = (x, z, poly) => { let binnen = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, zi] = poly[i], [xj, zj] = poly[j]; if ((zi > z) !== (zj > z) && x < (xj - xi) * (z - zi) / (zj - zi) + xi) binnen = !binnen; } return binnen; };
 const VIJVER = [[-192, 22], [-150, 20], [-110, 24], [-112, 37], [-160, 39], [-192, 36]];
 const RIVIER = [[-700, -300], [700, -306], [700, -276], [-700, -272]];
 const EILAND_STRAND = [[-157, -214], [-130, -231], [-95, -233], [-66, -224], [-54, -200], [-57, -168], [-74, -144], [-104, -137], [-136, -142], [-153, -160], [-160, -188]];
@@ -404,10 +405,11 @@ const lijnPad = (punten, breed, materiaal, y = .28) => {
   }
 };
 // plein met betontegels rond het troephuis
-vlak(30, 37, M.tegels, -25, -6.5);
-vlak(26, 21, M.tegels, -23, 22.5);
-vlak(46, 18, M.tegels, -3, 26.5);
-vlak(8, 40, M.tegels, 17, 4);
+vlak(6, 31, M.tegels, -16, -3);    // tegelpad langs de westgevel
+vlak(50, 9, M.tegels, -21, 16.5);  // tussen gebouw en loods, tot aan de kraan
+vlak(46, 11, M.tegels, -3, 23);    // voor de ingang
+vlak(4, 40, M.tegels, 15.5, 0);    // smal pad aan de oostkant
+vlak(16, 9, M.pad, -24, 8);        // zandvlak met omgekeerde bootjes
 // toegangsweg en dijkpaden
 lijnPad([[8, 35], [12, 46], [24, 56], [28, 90], [30, 140]], 5, M.asfalt);
 lijnPad([[-190, 30], [-120, 44], [-40, 52], [24, 56], [120, 60], [400, 64]], 3.2, M.pad, .3);
@@ -470,7 +472,8 @@ const doos = (b, h, d, materiaal, x, y, z, ouder = gebouw, schaduw = true) => {
     doos(.14, 1.3, .12, M.wit, kant * (B / 2 + .2), 3.05, z + 2.1, gebouw, false);
   }
   // buitendeur van ons lokaal (doorgang onder de zolder)
-  doos(.12, 2.1, 1.05, mat('#6A4E36'), -B / 2 - .2, 1.35, 7 - 3.42 + 1, gebouw, false);
+  doos(.1, 2.2, 1.25, M.wit, -B / 2 - .2, 1.4, 7 - 3.42 + 1.05, gebouw, false);
+  doos(.12, 1.95, .95, M.glas, -B / 2 - .22, 1.35, 7 - 3.42 + 1.05, gebouw, false);
   // voordeur (zuid) en achterdeur (noord): glazen deuren met witte kozijnen
   for (const kant of [1, -1]) {
     const zz = kant * (L / 2 + .2);
@@ -623,9 +626,9 @@ const LX = -8, LZ = 7; // midden van het lokaal (10 x 7 m)
   doos(.6, .3, .35, mat('#2A4FA0'), W + .55, .6, ZZ - .3, lokaal); doos(.5, .3, .35, mat('#C8302C'), W + 1.25, 1.15, ZZ - .3, lokaal);
   // klushoek: osb-wanden, twee kasten, werkbank, gereedschap
   const kZ0 = LZ - 1.4, kZ1 = LZ + 1.7;
-  doos(.06, ZOLDER - .3, kZ1 - kZ0 - .9, osb, ZR - .1, (ZOLDER + .3) / 2, (kZ0 + kZ1) / 2 - .45, lokaal);
-  doos(3, ZOLDER - .3, .06, osb, W + 1.5, (ZOLDER + .3) / 2, kZ0, lokaal);
-  doos(3, ZOLDER - .3, .06, osb, W + 1.5, (ZOLDER + .3) / 2, kZ1, lokaal);
+  doos(3, ZOLDER - .3, .06, M.rozeWand, W + 1.5, (ZOLDER + .3) / 2, kZ0, lokaal);
+  doos(3, ZOLDER - .3, .06, M.rozeWand, W + 1.5, (ZOLDER + .3) / 2, kZ1, lokaal);
+  doos(.06, ZOLDER - .4, 1.2, osb, W + .9, (ZOLDER + .2) / 2, LZ + 1.0, lokaal); // osb-kast met gereedschap (zoals op de foto)
   kluis(W + .35, LZ - .85); kluis(W + .35, LZ - .2);
   doos(.75, .06, 1.6, M.hout, W + 2.1, 1.0, LZ + .9, lokaal); // werkbank
   for (const dz of [-.7, .7]) doos(.06, .7, .06, M.hout, W + 2.4, .65, LZ + .9 + dz, lokaal, false);
@@ -635,8 +638,12 @@ const LX = -8, LZ = 7; // midden van het lokaal (10 x 7 m)
   kluis(ZR - .45, LZ + 1.35, .5); kluis(ZR - .45, LZ + .85, .5);
   for (let i = 0; i < 3; i++) doos(.12, .8, .35, [mat('#1E1F24'), mat('#2B3B6B'), mat('#30343A')][i], ZR - .2, 1.5, LZ - .9 + i * .3, lokaal, false);
   // nooduitgang (noordkant) met groen bordje en een kast
-  doos(.08, 2.1, 1.1, mat('#A8B4BC', { roughness: .2, metalness: .3 }), W - .08, 1.35, ZN + 1, lokaal, false);
-  doos(.06, .14, .4, new THREE.MeshBasicMaterial({ color: '#19B25A' }), W + .06, 2.55, ZN + 1, lokaal, false);
+  const deurZ = ZN + 1.05;
+  doos(.06, 2.15, 1.2, M.wit, W + .04, 1.4, deurZ, lokaal, false); // kozijn
+  doos(.07, 1.95, .95, new THREE.MeshStandardMaterial({ color: '#CFE3EE', emissive: '#BFD9E6', emissiveIntensity: .5, roughness: .1 }), W + .06, 1.35, deurZ, lokaal, false); // glas met daglicht
+  doos(.09, .06, .95, M.wit, W + .07, 1.2, deurZ, lokaal, false);
+  doos(.1, .05, .3, mat('#C7C7C7', { metalness: .7, roughness: .3 }), W + .12, 1.25, deurZ + .3, lokaal, false); // panieksluiting
+  doos(.06, .14, .4, new THREE.MeshBasicMaterial({ color: '#19B25A' }), W + .08, 2.62, ZN + 1.05, lokaal, false);
   doos(1.4, 1.85, .5, kastMat, W + 1.4, 1.25, kZ0 - .3, lokaal);
   doos(.6, .45, .1, mat('#E9E6E0'), W + 2.2, .55, ZN + .25, lokaal); // radiator
   // de ladder tegen de rechtermuur
@@ -804,16 +811,16 @@ const dak = new THREE.Group(); gebouw.add(dak);
   // vlonderpad
   lijnPad([[-33, -30], [-36, -27], [-37.5, -24]], 1.6, M.steigerHout, .45);
   // omgekeerde bootjes op het gras en een stapel boomstammen
-  for (const [x, z, a] of [[-29, -10, .3], [-26, -4, -.2]]) {
+  for (const [x, z, a] of [[-27, 7, .3], [-22, 9, -.2]]) {
     const romp = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat('#2C4C8A', { flatShading: false }));
     romp.scale.set(2.2, .45, .75); romp.position.set(x, .3, z); romp.rotation.y = a; romp.castShadow = true; scene.add(romp);
   }
   for (let i = 0; i < 5; i++) {
     const s = new THREE.Mesh(new THREE.CylinderGeometry(.25, .28, 3.2, 8).rotateZ(Math.PI / 2), mat('#8A7A66'));
-    s.position.set(-32 + i * .7, .5, -14 + (i % 2) * .5); s.rotation.y = 1.2; s.castShadow = true; scene.add(s);
+    s.position.set(-30 + i * .7, .5, 10.5 + (i % 2) * .5); s.rotation.y = 1.2; s.castShadow = true; scene.add(s);
   }
   // bankjes
-  for (const [x, z, a] of [[-24, -20, 0], [-14, 22 - 12, 1.57]]) { const b = doos(1.8, .1, .5, M.hout, x, .7, z, scene); b.rotation.y = a; }
+  for (const [x, z, a] of [[-20, -20, 0], [-14, 10, 1.57]]) { const b = doos(1.8, .1, .5, M.hout, x, .7, z, scene); b.rotation.y = a; }
   // bunker (oude, met gras begroeid)
   const bunker = new THREE.Mesh(new THREE.BoxGeometry(6, 2.2, 5), M.beton); bunker.position.set(34, 1.1, 12); bunker.castShadow = true; scene.add(bunker);
   const bdak = new THREE.Mesh(new THREE.SphereGeometry(4, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), M.grasDonker); bdak.scale.set(1, .35, .9); bdak.position.set(34, 2.1, 12); scene.add(bdak);
@@ -961,14 +968,17 @@ const bomen = (() => {
       plekken.push({ x: x + (mx - x) / l * d, z: z + (mz - z) / l * d, s: (.7 + r() * .6) * schaal, soort });
     }
   };
-  // rond het troephuis: wilgen aan de waterkant (noord) en een rij langs de oostkant
-  wolk(0, -30, 34, 7, 34, 'wilg');
-  wolk(-30, -26, 6, 6, 8, 'wilg');
-  for (let z = -15; z <= 30; z += 5.5) plekken.push({ x: 21 + r() * 2, z, s: .8 + r() * .3, soort: 'boom' });
-  wolk(-38, 40, 14, 4, 10, 'struik', .9);
-  wolk(40, 44, 14, 4, 10, 'struik', .9);
-  wolk(30, -10, 8, 18, 14, 'wilg');
-  wolk(40, 40, 8, 12, 10, 'boom');
+  // rond het troephuis, zoals op de satellietfoto:
+  wolk(-6, -31, 34, 8, 60, 'wilg');                // dichte bomenrij langs de waterkant (noord)
+  wolk(-29, -11, 6, 15, 46, 'boom');               // bosje tussen steiger en gebouw
+  wolk(-31, -24, 5, 4, 8, 'wilg');
+  for (let z = -15; z <= 26; z += 3.2) plekken.push({ x: 20 + r() * 4, z, s: .8 + r() * .35, soort: r() < .3 ? 'wilg' : 'boom' }); // rij aan de oostkant
+  wolk(-8, 40, 32, 6, 70, 'boom');                 // brede bomenstrook tussen loods en weg
+  wolk(-30, 44, 12, 5, 20, 'struik', 1.1);
+  wolk(30, 44, 10, 6, 16, 'struik', 1.1);
+  wolk(46, -30, 8, 10, 14, 'wilg');                // bosje in de hoek bij de plas
+  wolk(56, 5, 5, 30, 26, 'boom');                  // rand langs de sportbaan
+  for (let i = 0; i < 6; i++) plekken.push({ x: 30 + r() * 18, z: -20 + r() * 34, s: .7 + r() * .4, soort: 'boom' }); // losse bomen in het veld
   // eilanden
   langs(EILAND_BOS, 120, 7, 'wilg');
   wolk(-110, -50, 14, 12, 12, 'struik', .8);
@@ -982,7 +992,18 @@ const bomen = (() => {
   wolk(260, 30, 60, 30, 26, 'boom');
   for (let i = 0; i < 40; i++) plekken.push({ x: -800 + r() * 1600, z: -500 - r() * 300, s: 1 + r() * .8, soort: r() < .5 ? 'boom' : 'populier' });
   for (let i = 0; i < 40; i++) plekken.push({ x: -800 + r() * 1600, z: 200 + r() * 200, s: 1 + r() * .8, soort: 'boom' });
-  return plekken;
+  const inVlak = (x, z, x0, x1, z0, z1) => x > x0 && x < x1 && z > z0 && z < z1;
+  const opWeg = (x, z) => { const w = [[8, 35], [12, 46], [24, 56], [28, 90]]; for (let i = 0; i < w.length - 1; i++) { const [ax, az] = w[i], [bx, bz] = w[i + 1]; const t = klem(((x - ax) * (bx - ax) + (z - az) * (bz - az)) / ((bx - ax) ** 2 + (bz - az) ** 2), 0, 1); if (Math.hypot(x - ax - t * (bx - ax), z - az - t * (bz - az)) < 4.5) return true; } return false; };
+  return plekken.filter((b) => !(
+    inVlak(b.x, b.z, -15, 15, -20, 20) ||           // troephuis
+    inVlak(b.x, b.z, -31, -4, 18, 32) ||            // loods
+    inVlak(b.x, b.z, -46, 14, 11.5, 21) ||          // tegels tussen gebouw en loods
+    inVlak(b.x, b.z, -27, 21, 17, 29) ||            // tegels voor de ingang
+    inVlak(b.x, b.z, -20, -12, -19, 12) ||          // tegelpad
+    inVlak(b.x, b.z, -32, -16, 3.5, 12.5) ||        // zandvlak
+    inVlak(b.x, b.z, -42, -35.5, -28, 24) ||        // steiger en kade
+    Math.hypot(b.x + 22, b.z + 16) < 2.5 || Math.hypot(b.x + 27, b.z + 33) < 3.5 || Math.hypot(b.x - 34, b.z - 12) < 4.5 ||
+    opWeg(b.x, b.z) || (Math.abs(b.x) < 320 && Math.abs(b.z) < 320 && inPolygoon(b.x, b.z, PLAS) && !inPolygoon(b.x, b.z, EILAND_BOS) && !inPolygoon(b.x, b.z, EILAND_STRAND))));
 })();
 const bosGroep = new THREE.Group(); scene.add(bosGroep);
 const zetBomen = () => {
@@ -1029,6 +1050,30 @@ const zetBomen = () => {
   bosGroep.add(kruinen, stammen);
 };
 zetBomen();
+
+// ruig gras en pollen: het terrein is geen biljartlaken
+{
+  const r = zaad(424), n = klein ? 3500 : 9000;
+  const g = new THREE.ConeGeometry(.06, 1, 3); g.translate(0, .5, 0);
+  const pol = new THREE.InstancedMesh(g, mat('#6E8A3E', { roughness: 1 }), n);
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), sc = new THREE.Vector3(), e = new THREE.Euler(), c = new THREE.Color();
+  const kleuren = ['#6E8A3E', '#7F9548', '#5D7A36', '#8E9A52', '#A2A060'];
+  const vrij = (x, z) => !((x > -16 && x < 16 && z > -20 && z < 30) || (x > -46 && x < 21 && z > 11.5 && z < 33) || (x > -20 && x < -12 && z > -19 && z < 12) || (x > -32 && x < -16 && z > 3.5 && z < 12.5) || (x > -42 && x < -35.5 && z > -28 && z < 24))
+    && !(inPolygoon(x, z, PLAS) && !inPolygoon(x, z, EILAND_BOS) && !inPolygoon(x, z, EILAND_STRAND)) && !inPolygoon(x, z, VIJVER);
+  let k = 0;
+  for (let i = 0; i < n * 3 && k < n; i++) {
+    // dichter bij het gebouw, en pollen in groepjes
+    const a = r() * Math.PI * 2, d = 6 + Math.pow(r(), 1.6) * 150, x = Math.cos(a) * d - 20, z = Math.sin(a) * d - 30;
+    if (!vrij(x, z)) continue;
+    for (let j = 0; j < 4 && k < n; j++) {
+      p.set(x + (r() - .5) * .8, .2, z + (r() - .5) * .8);
+      e.set((r() - .5) * .5, r() * 3, (r() - .5) * .5); q.setFromEuler(e);
+      const h = .25 + r() * .55; sc.set(1, h, 1);
+      pol.setMatrixAt(k, m4.compose(p, q, sc)); c.set(kleuren[Math.floor(r() * kleuren.length)]); pol.setColorAt(k, c); k++;
+    }
+  }
+  pol.count = k; pol.receiveShadow = true; scene.add(pol);
+}
 
 // riet langs de oevers
 {
@@ -1221,35 +1266,82 @@ const wend = () => { if (vaart.wend > 0) return; vaart.wend = 1; vaart.richting 
    Geluid (alleen als je het aanzet): water en wind
    ===================================================================== */
 const geluid = (() => {
-  let ctx = null, hoofd = null;
-  const ruis = (c, sec = 3) => {
+  // Geluid per plek: kabbelend water bij de plas en de steiger, vogels overdag buiten,
+  // wind alleen hoog in de lucht, binnen in het lokaal een stille ruimte, 's nachts krekels.
+  let ctx, hoofd, lagen = null, vogelTimer = 0;
+  const ruis = (c, sec = 3, kleurRuis = 'bruin') => {
     const b = c.createBuffer(1, c.sampleRate * sec, c.sampleRate), d = b.getChannelData(0);
     let laatst = 0;
-    for (let i = 0; i < d.length; i++) { laatst = (laatst + .02 * (Math.random() * 2 - 1)) / 1.02; d[i] = laatst * 3.5; }
+    for (let i = 0; i < d.length; i++) {
+      const w = Math.random() * 2 - 1;
+      if (kleurRuis === 'wit') d[i] = w * .5; else { laatst = (laatst + .02 * w) / 1.02; d[i] = laatst * 3.5; }
+    }
     const s = c.createBufferSource(); s.buffer = b; s.loop = true; return s;
+  };
+  const laag = (bron, filters, startGain = 0) => {
+    const g = ctx.createGain(); g.gain.value = startGain;
+    let n = bron; filters.forEach((f) => { n.connect(f); n = f; }); n.connect(g); g.connect(hoofd); bron.start(); return g;
+  };
+  const filter = (type, f, q = .7) => { const x = ctx.createBiquadFilter(); x.type = type; x.frequency.value = f; x.Q.value = q; return x; };
+  const tjilp = () => {
+    // één vogeltje: een paar snelle fluitjes
+    const t0 = ctx.currentTime, n = 2 + Math.floor(Math.random() * 4), basis = 2600 + Math.random() * 2400;
+    for (let i = 0; i < n; i++) {
+      const o = ctx.createOscillator(), g = ctx.createGain(), t = t0 + i * (.09 + Math.random() * .06);
+      o.type = 'sine'; o.frequency.setValueAtTime(basis * (1 + Math.random() * .15), t);
+      o.frequency.exponentialRampToValueAtTime(basis * (.7 + Math.random() * .6), t + .07);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.05 + Math.random() * .04, t + .01); g.gain.exponentialRampToValueAtTime(.0005, t + .08);
+      o.connect(g); g.connect(lagen.vogelBus); o.start(t); o.stop(t + .1);
+    }
   };
   return {
     aan() {
       if (!ctx) {
         ctx = new (window.AudioContext || window.webkitAudioContext)();
         hoofd = ctx.createGain(); hoofd.gain.value = 0; hoofd.connect(ctx.destination);
-        // kabbelend water
-        const w = ruis(ctx), lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 520;
-        const wg = ctx.createGain(); wg.gain.value = .55;
-        const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = .23; lg.gain.value = .3; lfo.connect(lg); lg.connect(wg.gain); lfo.start();
-        w.connect(lp); lp.connect(wg); wg.connect(hoofd); w.start();
-        // wind door het riet
-        const r = ruis(ctx, 5), bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = .6;
-        const rg = ctx.createGain(); rg.gain.value = .12;
-        const lfo2 = ctx.createOscillator(), lg2 = ctx.createGain(); lfo2.frequency.value = .07; lg2.gain.value = .08; lfo2.connect(lg2); lg2.connect(rg.gain); lfo2.start();
-        r.connect(bp); bp.connect(rg); rg.connect(hoofd); r.start();
+        lagen = {};
+        // water: zacht kabbelen (laag) met kleine klotsjes tegen de steiger
+        const wLfo = ctx.createOscillator(), wLg = ctx.createGain(); wLfo.frequency.value = .35; wLg.gain.value = .25;
+        lagen.water = laag(ruis(ctx, 4), [filter('lowpass', 420), filter('highpass', 90)]);
+        wLfo.connect(wLg); wLg.connect(lagen.water.gain); wLfo.start();
+        lagen.klots = laag(ruis(ctx, 2, 'wit'), [filter('bandpass', 1300, 1.8)]);
+        const kLfo = ctx.createOscillator(), kLg = ctx.createGain(); kLfo.frequency.value = 1.7; kLg.gain.value = .02; kLfo.connect(kLg); kLg.connect(lagen.klots.gain); kLfo.start();
+        // wind: alleen hoog in de lucht
+        lagen.wind = laag(ruis(ctx, 5), [filter('bandpass', 500, .4)]);
+        // riet en bladeren: zacht ruisen
+        lagen.blad = laag(ruis(ctx, 3, 'wit'), [filter('highpass', 3500), filter('lowpass', 7000)]);
+        // binnen: dove, stille ruimte (een beetje bromtoon van de tl-lampen)
+        lagen.binnen = laag(ruis(ctx, 3), [filter('lowpass', 160)]);
+        const brom = ctx.createOscillator(); brom.frequency.value = 100; const bg = ctx.createGain(); bg.gain.value = .006; brom.connect(bg); bg.connect(lagen.binnen); brom.start();
+        // krekels 's nachts: hoge toon die snel aan en uit gaat
+        const kr = ctx.createOscillator(); kr.frequency.value = 4400; const krAm = ctx.createGain(); krAm.gain.value = 0;
+        const puls = ctx.createOscillator(); puls.type = 'square'; puls.frequency.value = 28; const pg = ctx.createGain(); pg.gain.value = .5;
+        const traag = ctx.createOscillator(); traag.frequency.value = .6; const tg = ctx.createGain(); tg.gain.value = .5;
+        puls.connect(pg); pg.connect(krAm.gain); traag.connect(tg); tg.connect(krAm.gain);
+        lagen.krekel = ctx.createGain(); lagen.krekel.gain.value = 0; kr.connect(krAm); krAm.connect(lagen.krekel); lagen.krekel.connect(hoofd);
+        kr.start(); puls.start(); traag.start();
+        // vogels
+        lagen.vogelBus = ctx.createGain(); lagen.vogelBus.gain.value = 0; lagen.vogelBus.connect(hoofd);
       }
-      ctx.resume(); hoofd.gain.setTargetAtTime(.5, ctx.currentTime, .6);
+      ctx.resume(); hoofd.gain.setTargetAtTime(.6, ctx.currentTime, .6);
     },
     uit() { if (ctx) hoofd.gain.setTargetAtTime(0, ctx.currentTime, .3); },
+    // elke frame: mengverhouding volgens de plek van de camera en het uur
+    meng(m, dt) {
+      if (!ctx || !lagen || hoofd.gain.value < .01) return;
+      const t = ctx.currentTime, z = .35;
+      lagen.water.gain.setTargetAtTime(m.water * .55, t, z);
+      lagen.klots.gain.setTargetAtTime(m.klots * .06, t, z);
+      lagen.wind.gain.setTargetAtTime(m.wind * .3, t, z);
+      lagen.blad.gain.setTargetAtTime(m.blad * .05, t, z);
+      lagen.binnen.gain.setTargetAtTime(m.binnen * .35, t, z);
+      lagen.krekel.gain.setTargetAtTime(m.krekel * .025, t, z);
+      lagen.vogelBus.gain.setTargetAtTime(m.vogels, t, z);
+      vogelTimer -= dt;
+      if (m.vogels > .05 && vogelTimer <= 0) { tjilp(); vogelTimer = .6 + Math.random() * 3.2 / m.vogels; }
+    },
     wend() {
       if (!ctx || hoofd.gain.value < .05) return;
-      // klapperend zeil
       const s = ruis(ctx, 1), f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 300; const g = ctx.createGain();
       g.gain.setValueAtTime(0, ctx.currentTime); g.gain.linearRampToValueAtTime(.8, ctx.currentTime + .05); g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .9);
       s.connect(f); f.connect(g); g.connect(hoofd); s.start(); s.stop(ctx.currentTime + 1);
@@ -1340,6 +1432,28 @@ const frame = (nu) => {
 
   // dak open boven ons lokaal
   const open = dakOpen(stand);
+  // geluid: wat hoor je op deze plek?
+  {
+    const w = (n) => (stand.a === n ? 1 - stand.f : 0) + (stand.b === n ? stand.f : 0);
+    const binnenNu = klem(w('lokaal') * 1.4 - open, 0, 1) * (camPos.y < 3.5 ? 1 : 0);
+    const buiten = 1 - binnenNu;
+    const hoogte = klem((camPos.y - 8) / 40, 0, 1);
+    const nachtNu = glad(.7, .85, tijd), dagNu = 1 - glad(.6, .75, tijd);
+    // afstand tot het water: water is overal ten noorden/westen, grofweg via een paar punten
+    let dw = 1e9; for (let i = 0; i < PLAS.length; i++) { const p = PLAS[i]; dw = Math.min(dw, Math.hypot(camPos.x - p[0], camPos.z - p[1])); }
+    const opWater = stand.a === 'nacht' || stand.b === 'nacht' || stand.a === 'plas' || stand.b === 'plas' ? 1 : 0;
+    const bijWater = Math.max(opWater, klem(1 - dw / 70, 0, 1));
+    geluid.meng({
+      water: buiten * (.25 + .75 * bijWater) * (1 - hoogte * .6),
+      klots: buiten * w('steiger') + buiten * (stand.a === 'nacht' ? .6 : 0),
+      wind: buiten * (.08 + hoogte * .9),
+      blad: buiten * (1 - hoogte) * .8,
+      binnen: binnenNu,
+      vogels: buiten * dagNu * (1 - hoogte * .7) * .9,
+      krekel: buiten * nachtNu
+    }, dt);
+  }
+
   dak.position.y = open * 14; dak.visible = open < .98; plafond.visible = open < .02;
   dak.children.forEach((c) => { if (c.material) { c.material.transparent = open > 0; c.material.opacity = 1 - open; } });
 
