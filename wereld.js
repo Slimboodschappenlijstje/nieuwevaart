@@ -950,7 +950,7 @@ const zetTijd = (t) => {
   waterMat.uniforms.lucht.value.copy(luchtMat.uniforms.horizon.value);
   waterMat.uniforms.zonRichting.value.copy(t > .8 ? md : zd);
   waterMat.uniforms.zonKleur.value.copy(t > .8 ? tmp.set('#C9C8E8') : luchtMat.uniforms.zonKleur.value);
-  waterMat.uniforms.glans.value = t > .8 ? glad(.8, 1, t) * .5 : 1 - glad(.6, .72, t);
+  waterMat.uniforms.glans.value = t > .8 ? glad(.8, 1, t) * .15 : 1 - glad(.6, .72, t);
   // lampen aan in de schemering
   const aan = glad(.6, .74, t);
   M.raamGlas.emissiveIntensity = aan * 1.4; M.glas.emissiveIntensity = aan * 1.1;
@@ -1109,16 +1109,16 @@ const frame = (nu) => {
   // camera
   const stand = berekenDoel();
   if (winter && (stand.a === 'nacht' || stand.b === 'nacht')) {
-    const w = stand.b === 'nacht' ? glad(0, .45, stand.f) : 1;
+    const w = stand.a === 'nacht' ? 1 : glad(0, .45, stand.f);
     doelPos.lerp(tmpV.set(-72, 7, -66), w); doelKijk.lerp(tmpV2.set(-6, 2.5, 0), w);
   }
   // laatste hoofdstuk: de camera vaart mee met de 1798 (in de zomer)
   if (!winter && (stand.a === 'nacht' || stand.b === 'nacht')) {
-    const w = stand.b === 'nacht' ? glad(0, .45, stand.f) : 1;
+    const w = stand.a === 'nacht' ? 1 : glad(0, .45, stand.f);
     const bp = zeiler.position;
     const ry = zeiler.rotation.y, vooruit = new THREE.Vector3(Math.cos(ry), 0, -Math.sin(ry)), zij = new THREE.Vector3(Math.sin(ry), 0, Math.cos(ry));
-    const volg = bp.clone().addScaledVector(vooruit, -9).addScaledVector(zij, 6.5).add(new THREE.Vector3(0, 3.4, 0));
-    doelPos.lerp(volg, w); doelKijk.lerp(bp.clone().add(new THREE.Vector3(0, 3.2, 0)), w);
+    const volg = bp.clone().addScaledVector(vooruit, -11).addScaledVector(zij, 13).add(new THREE.Vector3(0, 5, 0));
+    doelPos.lerp(volg, w); doelKijk.lerp(bp.clone().add(new THREE.Vector3(0, 2.6, 0)), w);
   }
   if (!rustig) {
     doelPos.x += Math.sin(klok * .13) * .6 * (stand.a === 'intro' ? 6 : 1);
@@ -1181,5 +1181,6 @@ if (document.fonts) document.fonts.ready.then(meetAnkers);
 new ResizeObserver(meetAnkers).observe(document.body);
 meetAnkers();
 window.NVDecor = { start, stop, wend };
+if (zoekParam("debug") !== null) window.__nv = { camera, zeiler, vaart, scene, ankers: () => ankers, opScroll };
 html.classList.add('wereld-klaar');
 start();
