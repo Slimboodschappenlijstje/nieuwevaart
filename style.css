@@ -723,3 +723,38 @@ html.eenvoudig body:not(.thuis) main{padding-top:24px}
   body:not(.thuis) main{padding-top:0}
   .blad,body:not(.thuis) main>section{box-shadow:none;background:#fff!important;border:0;padding:0}
 }
+
+/* =====================================================================
+   3D-WERELD (homepage, wereld.js)
+   ===================================================================== */
+.wereld{display:none;position:fixed;inset:0;z-index:0}
+.wereld canvas{display:block;width:100%!important;height:100%!important}
+html.wereld-3d .wereld{display:block}
+html.wereld-3d .decor{display:none}
+html.eenvoudig .wereld,html.eenvoudig .wereld-knoppen,html.eenvoudig .aanboord,html.eenvoudig .wereld-label{display:none!important}
+.doorkijk--kort{height:34vh;height:34svh;padding:0}
+.doorkijk p span{display:block;margin-top:4px;font-family:var(--serif);font-style:italic;font-weight:400;font-size:1.05rem;letter-spacing:0;text-transform:none}
+.wereld-label{position:fixed;left:0;top:0;z-index:60;padding:8px 14px;border-radius:999px;background:var(--das);color:#fff;font:600 .7rem/1 var(--kop);letter-spacing:.14em;text-transform:uppercase;pointer-events:none;box-shadow:0 10px 24px -10px rgba(42,14,37,.6)}
+.wereld-knoppen{display:none;position:fixed;left:20px;bottom:20px;z-index:40;gap:8px}
+html.wereld-3d .wereld-knoppen{display:flex}
+.wereld-knop{min-height:40px;padding:0 16px;border:1px solid rgba(255,255,255,.55);border-radius:999px;background:rgba(20,12,30,.35);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;font:600 .68rem/1 var(--kop);letter-spacing:.16em;text-transform:uppercase;cursor:pointer}
+.wereld-knop:hover{background:rgba(20,12,30,.6)}
+.wereld-knop[aria-pressed="true"]{background:var(--das);border-color:var(--das)}
+/* Startscherm */
+.aanboord{display:none}
+html.wereld-3d .aanboord{display:grid;position:fixed;inset:0;z-index:80;place-items:center;padding:24px;background:radial-gradient(120% 90% at 50% 40%,#3A1238 0%,#170A1C 60%,#0B0A1E 100%);color:#fff;text-align:center;transition:opacity .8s ease,visibility .8s}
+.aanboord.is-weg{opacity:0;visibility:hidden}
+.aanboord__binnen{display:grid;justify-items:center;max-width:34rem}
+.aanboord__logo{width:72px;height:72px;margin-bottom:22px;opacity:.95}
+.aanboord__boven{margin:0 0 10px;font:600 .72rem/1.2 var(--kop);letter-spacing:.24em;text-transform:uppercase;color:#F2B8D5}
+.aanboord__titel{margin:0;font-family:var(--kop);font-weight:300;font-size:clamp(3rem,2rem + 6vw,6rem);line-height:.95;letter-spacing:-.035em}
+.aanboord__titel em{font-family:var(--serif);font-style:italic;font-weight:400;color:#F07AB0}
+.aanboord__tekst{margin:18px 0 0;color:#D9C6D9}
+.aanboord__pct{margin:26px 0 0;font:300 1.1rem/1 var(--kop);letter-spacing:.2em;color:#CDB5CC;font-variant-numeric:tabular-nums}
+.aanboord__knoppen{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:22px;opacity:0;transform:translateY(8px);transition:opacity .5s,transform .5s;pointer-events:none}
+.aanboord.is-klaar .aanboord__knoppen{opacity:1;transform:none;pointer-events:auto}
+.aanboord.is-klaar .aanboord__pct{opacity:.4}
+.knop--licht-rand{background:transparent;border-color:rgba(255,255,255,.7);color:#fff}
+.knop--licht-rand:hover{background:#fff;color:var(--blouw)}
+@media (max-width:600px){.wereld-knoppen{left:auto;right:12px;top:76px;bottom:auto;gap:6px}.wereld-knop{min-height:30px;padding:0 10px;font-size:.6rem}}
+@media print{.wereld,.wereld-knoppen,.aanboord,.wereld-label{display:none!important}}
