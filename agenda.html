@@ -16,11 +16,12 @@
 <link rel="icon" type="image/png" href="img/favicon-64.png">
 <link rel="apple-touch-icon" href="img/logo-192.png">
 <meta property="og:image" content="https://nieuwevaart.onrender.com/img/og.png">
-<script>document.documentElement.classList.add('js');</script>
+<script>document.documentElement.classList.add('js');try{if(localStorage.getItem('nieuwevaart-eenvoudig')==='1')document.documentElement.classList.add('eenvoudig')}catch(e){}</script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <a class="skiplink" href="#inhoud">Naar de inhoud</a>
+<div class="decor decor--kop" aria-hidden="true"><canvas id="decor" data-modus="klok"></canvas></div>
 
 <header class="kop" id="kop">
   <div class="wrap kop__inner">
@@ -133,6 +134,7 @@
 </footer>
 
 <script src="script.js"></script>
+<script src="scene.js"></script>
 <script src="agenda-instellingen.js"></script>
 <script src="agenda-ics.js"></script>
 <script src="agenda.js"></script>
