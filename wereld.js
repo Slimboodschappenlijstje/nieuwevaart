@@ -31,7 +31,8 @@ const opTijd = (r, t, uit = new THREE.Color()) => {
 
 /* ---------- Seizoen en tijd ---------- */
 const maand = new Date().getMonth();
-let winter = zoekParam('seizoen') ? zoekParam('seizoen') === 'winter' : (maand >= 10 || maand <= 2);
+let winter = zoekParam('seizoen') === 'winter'; // altijd zomer: boten in de haven
+const debugCam = zoekParam('cam') ? zoekParam('cam').split(',').map(Number) : null;
 const vastTijd = zoekParam('tijd') !== null ? klem(parseFloat(zoekParam('tijd')), 0, 1) : null;
 const tijdVolgensKlok = (d) => {
   const dag = (d - new Date(d.getFullYear(), 0, 0)) / 864e5;
@@ -95,7 +96,7 @@ const hemel = new THREE.HemisphereLight(0xCFE3F5, 0x6F7F4E, 1.2);
 scene.add(hemel);
 
 /* ---------- Materialen ---------- */
-const mat = (c, extra = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: .9, metalness: 0, flatShading: true, ...extra });
+const mat = (c, extra = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: .9, metalness: 0, flatShading: false, ...extra });
 const M = {
   gras: mat('#6E9A45', { flatShading: false }),
   grasDonker: mat('#5F7F44'),
@@ -131,16 +132,44 @@ const M = {
   tent: mat('#E9DCC8'),
   tentRoze: mat('#D9A3C2'),
   vuur: new THREE.MeshBasicMaterial({ color: '#FFB35A' }),
-  riet: mat('#9C9A5A'),
+  riet: mat('#7F8A4A'),
   eendLijf: mat('#8A6B4E'),
   eendKop: mat('#2F6B48'),
   snavel: mat('#E8B23A'),
   koplamp: new THREE.MeshBasicMaterial({ color: '#FFF2C8' }),
   achterlicht: new THREE.MeshBasicMaterial({ color: '#FF3B2F' })
 };
+/* ---------- Textuur voor een echtere uitstraling (gras, tegels, bladeren) ---------- */
+const ruisTextuur = (grootte, teken, herhaal = 1) => {
+  const c = document.createElement('canvas'); c.width = c.height = grootte;
+  const x = c.getContext('2d'); teken(x, grootte, zaad(grootte + 3));
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(herhaal, herhaal); t.anisotropy = 4; return t;
+};
+// gras: lichte en donkere vlekken en sprietjes (grijswaarden, de kleur komt van het materiaal)
+M.gras.map = ruisTextuur(512, (x, g, r) => {
+  x.fillStyle = '#d2d2d2'; x.fillRect(0, 0, g, g);
+  for (let i = 0; i < 90; i++) { const v = 170 + r() * 80; x.fillStyle = `rgba(${v},${v},${v},.35)`; x.beginPath(); x.arc(r() * g, r() * g, 20 + r() * 70, 0, 7); x.fill(); }
+  for (let i = 0; i < 9000; i++) { const v = 130 + r() * 125; x.strokeStyle = `rgba(${v},${v},${v},.55)`; x.lineWidth = 1; const a = r() * g, b = r() * g; x.beginPath(); x.moveTo(a, b); x.lineTo(a + (r() - .5) * 3, b - 2 - r() * 4); x.stroke(); }
+}, 1 / 14);
+M.grasDonker.map = M.gras.map;
+// betontegels van het plein (ca. 1 x 1 m)
+M.tegels.map = ruisTextuur(256, (x, g, r) => {
+  x.fillStyle = '#d8d6d0'; x.fillRect(0, 0, g, g);
+  for (let i = 0; i < 2600; i++) { const v = 180 + r() * 70; x.fillStyle = `rgba(${v},${v},${v - 4},.5)`; x.fillRect(r() * g, r() * g, 2, 2); }
+  for (let i = 0; i < 6; i++) { x.fillStyle = `rgba(90,90,80,${.04 + r() * .05})`; x.beginPath(); x.arc(r() * g, r() * g, 10 + r() * 40, 0, 7); x.fill(); }
+  x.strokeStyle = 'rgba(70,68,62,.55)'; x.lineWidth = 3;
+  for (let i = 0; i <= 2; i++) { x.beginPath(); x.moveTo(i * g / 2, 0); x.lineTo(i * g / 2, g); x.stroke(); x.beginPath(); x.moveTo(0, i * g / 2); x.lineTo(g, i * g / 2); x.stroke(); }
+});
+M.tegels.color.set('#C9C6BE');
+// bladerdak: gevlekt, zodat bomen niet als ballen ogen
+const bladTex = ruisTextuur(256, (x, g, r) => {
+  x.fillStyle = '#9a9a9a'; x.fillRect(0, 0, g, g);
+  for (let i = 0; i < 1400; i++) { const v = 90 + r() * 165; x.fillStyle = `rgba(${v},${v},${v},.8)`; x.beginPath(); x.ellipse(r() * g, r() * g, 2 + r() * 5, 1.5 + r() * 3, r() * 3, 0, 7); x.fill(); }
+}, 3);
 const winterKleuren = () => {
-  M.gras.color.set(winter ? '#8A9562' : '#6E9A45');
-  M.grasDonker.color.set(winter ? '#6E7650' : '#5F7F44');
+  M.gras.color.set(winter ? '#8A9562' : '#7C9E4C');
+  M.grasDonker.color.set(winter ? '#6E7650' : '#66844A');
 };
 winterKleuren();
 
@@ -239,7 +268,7 @@ const gloed = (k, maat) => {
    Land en water
    Vorm van de plas en eilanden overgenomen van de satellietfoto.
    ===================================================================== */
-const PLAS = [[-185, -240], [-40, -244], [120, -246], [230, -232], [280, -190], [285, -90], [250, -62], [150, -52], [80, -47], [30, -43], [-10, -41], [-37, -38], [-38, -10], [-37, 12], [-60, 13], [-110, 9], [-150, 7], [-186, 5]];
+const PLAS = [[-185, -240], [-40, -244], [120, -246], [230, -232], [280, -190], [285, -90], [250, -62], [150, -52], [80, -47], [30, -43], [-10, -41], [-37, -38], [-38, -10], [-37.5, 12], [-36.3, 13], [-36.3, 22.5], [-43, 22.5], [-44, 13.5], [-60, 13], [-110, 9], [-150, 7], [-186, 5], [-186, -134], [-150, -137], [-149, -159], [-186, -162]];
 const VIJVER = [[-192, 22], [-150, 20], [-110, 24], [-112, 37], [-160, 39], [-192, 36]];
 const RIVIER = [[-700, -300], [700, -306], [700, -276], [-700, -272]];
 const EILAND_STRAND = [[-157, -214], [-130, -231], [-95, -233], [-66, -224], [-54, -200], [-57, -168], [-74, -144], [-104, -137], [-136, -142], [-153, -160], [-160, -188]];
@@ -304,7 +333,9 @@ scene.add(water);
 
 /* ---------- Paden, wegen, pleinen ---------- */
 const vlak = (b, d, materiaal, x, z, y = .27, draai = 0) => {
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(b, d).rotateX(-Math.PI / 2), materiaal);
+  const geo = new THREE.PlaneGeometry(b, d).rotateX(-Math.PI / 2);
+  const uv = geo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * b / 2, uv.getY(i) * d / 2);
+  const m = new THREE.Mesh(geo, materiaal);
   m.position.set(x, y, z); m.rotation.y = draai; m.receiveShadow = true; scene.add(m); return m;
 };
 const lijnPad = (punten, breed, materiaal, y = .28) => {
@@ -315,7 +346,8 @@ const lijnPad = (punten, breed, materiaal, y = .28) => {
   }
 };
 // plein met betontegels rond het troephuis
-vlak(30, 58, M.tegels, -25, 4);
+vlak(30, 37, M.tegels, -25, -6.5);
+vlak(26, 21, M.tegels, -23, 22.5);
 vlak(46, 18, M.tegels, -3, 26.5);
 vlak(8, 40, M.tegels, 17, 4);
 // toegangsweg en dijkpaden
@@ -373,6 +405,8 @@ const doos = (b, h, d, materiaal, x, y, z, ouder = gebouw, schaduw = true) => {
     doos(.14, .12, 4.3, M.wit, kant * (B / 2 + .2), 3.65, z, gebouw, false);
     doos(.14, 1.3, .12, M.wit, kant * (B / 2 + .2), 3.05, z + 2.1, gebouw, false);
   }
+  // buitendeur van ons lokaal (doorgang onder de zolder)
+  doos(.12, 2.1, 1.05, mat('#6A4E36'), -B / 2 - .2, 1.35, 7 - 3.42 + 1, gebouw, false);
   // voordeur (zuid) en achterdeur (noord): glazen deuren met witte kozijnen
   for (const kant of [1, -1]) {
     const zz = kant * (L / 2 + .2);
@@ -417,34 +451,44 @@ const binnen = new THREE.Group(); gebouw.add(binnen);
 /* ---------- Ons lokaal: De Nieuwe Vaart (vroeger het meisjeslokaal) ---------- */
 const lokaal = new THREE.Group(); binnen.add(lokaal);
 const LX = -8, LZ = 7; // midden van het lokaal (10 x 7 m)
-const buizen = [];
 {
   const H = 3.3;
-  // roze zuidwand en grijze westwand, zoals op de foto
-  doos(9.6, H, .1, M.rozeWand, LX, H / 2 + .3, LZ + 3.38, lokaal, false);
-  doos(9.6, H, .1, M.grijsWand, LX, H / 2 + .3, LZ - 3.38, lokaal, false);
-  doos(.1, H, 6.7, M.grijsWand, -B / 2 + .3, H / 2 + .3, LZ, lokaal, false);
+  // Indeling (noord = kleine z). Vanuit de hal (oost) kijk je naar het water (west):
+  // links (zuid) de bankenhoek met tv, rechts (noord) de riemen en fokken,
+  // achterin langs de waterkant de zolder met slaapbanken in U-vorm.
+  const W = -B / 2 + .2, ZN = LZ - 3.42, ZZ = LZ + 3.42, ZOLDER = 2.2, ZR = W + 3; // ZR = rand van de zolder
+  doos(9.6, H, .1, M.grijsWand, LX, H / 2 + .3, ZZ, lokaal, false);
+  doos(9.6, H - 1.3, .1, M.rozeWand, LX, (H - 1.3) / 2 + 1.6, ZN, lokaal, false); // rechtermuur: roze met zwart onderin
+  doos(9.6, 1.3, .1, mat('#26272A'), LX, .95, ZN, lokaal, false);
+  doos(.1, ZOLDER, 6.7, M.grijsWand, W + .05, ZOLDER / 2 + .3, LZ, lokaal, false);
+  doos(.1, H - ZOLDER + .3, 6.7, mat('#B8265F'), W + .05, (H + ZOLDER + .3) / 2 + .15, LZ, lokaal, false); // zolder: donkerroze
+  doos(.06, H, 2.6, M.rozeWand, -3.12, H / 2 + .3, LZ + 2, lokaal, false); // roze muur bij de bankenhoek
+  doos(.06, H, 2.6, M.rozeWand, -3.12, H / 2 + .3, LZ - 2, lokaal, false);
   doos(9.6, .04, 6.7, mat('#8E8B86', { flatShading: false }), LX, .38, LZ, lokaal, false);
+  // ramen op zolderhoogte in de buitenmuur
+  const raamBinnen = mat('#CFE0E8', { roughness: .2, emissive: '#9FC3D6', emissiveIntensity: .35 });
+  for (let j = -1; j <= 1; j++) doos(.04, 1.1, 1.25, raamBinnen, W + .12, 3.05, LZ + j * 1.4, lokaal, false);
   // naam op de vloer, in roze
-  const n = new THREE.Mesh(new THREE.PlaneGeometry(7, 1.3).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: tekstTextuur('De Nieuwe Vaart', { kleur: '#C2286F', font: 'italic 400 128px "Instrument Serif", Georgia, serif' }), transparent: true, depthWrite: false }));
-  n.position.set(LX + 1.6, .42, LZ + .4); n.rotation.y = 0; lokaal.add(n);
-  // banken (grijs, L-vorm) en houten salontafel
+  const n = new THREE.Mesh(new THREE.PlaneGeometry(5.4, 1), new THREE.MeshBasicMaterial({ map: tekstTextuur('De Nieuwe Vaart', { kleur: '#C2286F', font: 'italic 400 128px "Instrument Serif", Georgia, serif' }), transparent: true, depthWrite: false }));
+  n.geometry.rotateX(-Math.PI / 2); n.position.set(-7.6, .42, LZ - .6); lokaal.add(n);
+
+  /* bankenhoek links (zuidoost): L-bank, tafel in het midden, tv aan de muur, radio in de hoek */
   const bank = (b, d, x, z) => { doos(b, .45, d, M.bank, x, .62, z, lokaal); doos(b, .2, d * .9, M.kussen, x, .95, z, lokaal); };
-  bank(4.6, 1, LX - 1.5, LZ + 2.6);
-  bank(1, 3.4, -B / 2 + 1, LZ + .6);
-  bank(4, 1, LX - 2, LZ - 2.6);
-  doos(1.4, .45, .85, M.tafel, LX - 2.4, .6, LZ + .2, lokaal);
-  // westwand: tv, plank met bordjes, poster met de bootnummers, anker, klok
-  const W = -B / 2 + .37;
-  doos(.06, .75, 1.25, M.zwart, W, 2, LZ, lokaal, false);
-  doos(.3, .05, 4.2, M.hout, W + .12, 2.75, LZ - .2, lokaal, false);
+  const rug = (b, d, x, z) => doos(b, .55, d, M.kussen, x, 1.2, z, lokaal);
+  bank(.95, 3.2, -3.65, ZZ - 1.75); rug(.25, 3.2, -3.28, ZZ - 1.75);
+  bank(3.2, .95, -5.55, ZZ - 3.1); rug(3.2, .25, -5.55, ZZ - 3.48);
+  doos(1.3, .45, .8, M.tafel, -5.3, .6, ZZ - 1.6, lokaal);
+  doos(1.3, .06, 1.25, M.zwart, -5.6, 1.85, ZZ - .07, lokaal, false); // tv
+  doos(1.5, .5, .4, M.hout, -5.6, .55, ZZ - .25, lokaal); // kastje onder de tv
+  doos(.45, .3, .25, mat('#2F3B3A'), -4.75, .95, ZZ - .25, lokaal); // radio in de hoek
   const bordje = (tekst, b, h, achter, kl, x, y, z, font) => {
     const p = new THREE.Mesh(new THREE.PlaneGeometry(b, h), new THREE.MeshStandardMaterial({ map: tekstTextuur(tekst, { achter, kleur: kl, b: 1024, h: Math.round(1024 * h / b), font }), roughness: .5 }));
-    p.position.set(x, y, z); p.rotation.y = Math.PI / 2; lokaal.add(p); return p;
+    p.position.set(x, y, z); p.rotation.y = Math.PI; lokaal.add(p); return p;
   };
-  bordje('Nieuwevaart', 1.1, .24, '#1F4FA8', '#ffffff', W + .08, 2.92, LZ + .1, '600 150px Arial, sans-serif');
-  bordje('ALPHA', .9, .26, '#F2B8C6', '#C2286F', W + .02, 3.2, LZ + .9, '800 170px Arial, sans-serif');
-  bordje('Kippenweg', .95, .22, '#2E8A4A', '#ffffff', W + .02, 2.98, LZ - 1.3, '700 150px Arial, sans-serif');
+  doos(3.6, .05, .3, M.hout, -5.6, 2.62, ZZ - .17, lokaal, false); // plank met bordjes
+  bordje('Nieuwevaart', 1.1, .24, '#1F4FA8', '#ffffff', -5.4, 2.8, ZZ - .1, '600 150px Arial, sans-serif');
+  bordje('ALPHA', .9, .26, '#F2B8C6', '#C2286F', -6.6, 3.05, ZZ - .06, '800 170px Arial, sans-serif');
+  bordje('Kippenweg', .95, .22, '#2E8A4A', '#ffffff', -4.2, 2.82, ZZ - .06, '700 150px Arial, sans-serif');
   // poster: "gevuurd door vlieken" met 755, 1063, 1766, 1798
   {
     const c = document.createElement('canvas'); c.width = 1024; c.height = 512;
@@ -455,34 +499,72 @@ const buizen = [];
       x.fillStyle = '#1F2B4E'; x.font = '700 54px Arial'; x.fillText(t, cx, cy + 18);
     });
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
-    const p = new THREE.Mesh(new THREE.PlaneGeometry(1.8, .9), new THREE.MeshStandardMaterial({ map: t, roughness: .6 }));
-    p.position.set(-B / 2 + .4, 3.25, LZ - 1.9); p.rotation.y = Math.PI / 2; lokaal.add(p);
+    const p = new THREE.Mesh(new THREE.PlaneGeometry(1.6, .8), new THREE.MeshStandardMaterial({ map: t, roughness: .6 }));
+    p.position.set(-4.1, 3.3, ZZ - .07); p.rotation.y = Math.PI; lokaal.add(p);
   }
-  // groen anker-bord
-  {
-    const c = document.createElement('canvas'); c.width = c.height = 256;
-    const x = c.getContext('2d'); x.fillStyle = '#2E8A4A'; x.beginPath(); x.ellipse(128, 128, 120, 110, 0, 0, 7); x.fill();
-    x.strokeStyle = '#E9E2D2'; x.lineWidth = 14; x.lineCap = 'round';
-    x.beginPath(); x.moveTo(128, 50); x.lineTo(128, 200); x.moveTo(90, 85); x.lineTo(166, 85); x.moveTo(70, 160); x.quadraticCurveTo(128, 230, 186, 160); x.stroke();
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
-    const p = new THREE.Mesh(new THREE.PlaneGeometry(.75, .75), new THREE.MeshStandardMaterial({ map: t, transparent: true }));
-    p.position.set(W + .02, 3.15, LZ + 2.2); p.rotation.y = Math.PI / 2; lokaal.add(p);
+
+  /* rechtermuur (noord, roze met zwart): roeren en zwaarden onderin, riemen en fokken */
+  const roerMat = mat('#8A5A48', { roughness: .8 });
+  [[-4.2, .9, .8], [-5.2, .7, .65], [-6.1, 1, .75], [-7, .8, .7]].forEach(([x, b, h], i) => {
+    const roer = doos(b, h, .05, roerMat, x, .3 + h / 2, ZN + .22, lokaal, false); roer.rotation.x = -.12;
+    doos(.06, 1.1, .06, mat('#3E5E8A'), x - b * .25, .9 + h * .4, ZN + .14, lokaal, false); // helmstok
+  });
+  const riemMat = mat('#C49A5A', { roughness: .6 });
+  for (let i = 0; i < 10; i++) {
+    const r = new THREE.Mesh(new THREE.CylinderGeometry(.035, .035, 3.3, 6), riemMat);
+    r.position.set(-8.1 - i * .17, 1.95, ZN + .16 + (i % 2) * .08); r.rotation.z = .06 * (i % 3 - 1); lokaal.add(r);
+    doos(.14, .6, .04, riemMat, -8.1 - i * .17, .62, ZN + .16 + (i % 2) * .08, lokaal, false);
   }
-  // zolder met zwemvesten boven de deur naar de hal, en de boei-schommel
-  doos(1.8, .15, 6.6, M.hout, -3.9, 2.55, LZ, lokaal);
-  for (let i = 0; i < 4; i++) doos(.08, .9, .08, M.hout, -4.75, 3.0, LZ - 3 + i * 2, lokaal, false);
-  const r = zaad(9);
-  for (let i = 0; i < 26; i++) {
-    const v = doos(.42, .55, .12, M.oranje, -4.3 + r() * .7, 2.95 + r() * .3, LZ - 3 + r() * 6, lokaal, false);
-    v.rotation.y = r() * .6 - .3; v.rotation.z = r() * .3 - .15;
+  const fokMat = new THREE.MeshStandardMaterial({ color: '#EDE8DC', side: THREE.DoubleSide, roughness: .95 });
+  for (let i = 0; i < 3; i++) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, .7, 0, 0, .15, -2.3, 0, .7, 0, 0, .55, -2.2, 0, .15, -2.3, 0], 3)); g.computeVertexNormals();
+    const f = new THREE.Mesh(g, fokMat); f.position.set(-5.6 + i * .5, 3.5, ZN + .3 + i * .05); lokaal.add(f);
   }
-  // trap naar de zolder
-  for (let i = 0; i < 9; i++) doos(.9, .08, .28, M.hout, -4.2, .5 + i * .26, LZ + 3.2 - i * .28, lokaal, false);
-  // schommel: boei aan een touw
-  const schommel = new THREE.Group(); schommel.position.set(LX + .6, 3.55, LZ - .4); lokaal.add(schommel);
-  const touw = new THREE.Mesh(new THREE.CylinderGeometry(.02, .02, 2.4, 6), M.hout); touw.position.y = -1.2; schommel.add(touw);
-  const boei = new THREE.Mesh(new THREE.SphereGeometry(.38, 18, 12), mat('#F1EEE6', { flatShading: false })); boei.position.y = -2.55; boei.castShadow = true; schommel.add(boei);
-  buizen.push(schommel);
+  for (let i = 0; i < 4; i++) doos(.04, 1.5, .04, M.zwart, -4.5 + i * .5, 2.9, ZN + .12, lokaal, false); // lijnen aan de haak
+
+  /* zolder langs de waterkant, met smalle slaapbanken in U-vorm */
+  doos(3, .15, 6.75, M.hout, W + 1.5, ZOLDER, LZ, lokaal);
+  for (let i = 0; i < 5; i++) doos(.1, ZOLDER - .3, .1, M.hout, ZR, (ZOLDER + .3) / 2, LZ - 3.2 + i * 1.6, lokaal);
+  doos(.06, .06, 6.7, M.hout, ZR, ZOLDER + .95, LZ, lokaal, false); // reling
+  for (let i = 0; i < 12; i++) doos(.04, .9, .04, M.hout, ZR, ZOLDER + .5, LZ - 3.1 + i * .56, lokaal, false);
+  const matras = mat('#55585C');
+  doos(.75, .2, 6.6, matras, W + .45, ZOLDER + .17, LZ, lokaal); // langs de buitenmuur
+  doos(2.2, .2, .75, matras, W + 1.85, ZOLDER + .17, ZN + .45, lokaal); // noord
+  doos(2.2, .2, .75, matras, W + 1.85, ZOLDER + .17, ZZ - .45, lokaal); // zuid
+  // reddingsvesten: een hele rij hangt aan de voorkant van de zolder, zoals op de foto's
+  const r = zaad(9), vestKleur = [mat('#E8541E'), mat('#D9461C'), mat('#F06A2A'), mat('#C93F1E')];
+  for (let i = 0; i < 30; i++) {
+    const z = LZ - 3.15 + i * .215 + r() * .05;
+    const v = doos(.12, .58 + r() * .12, .36, vestKleur[i % 4], ZR + .12 + r() * .05, ZOLDER + .55 + r() * .12, z, lokaal, false);
+    v.rotation.x = r() * .3 - .15; v.rotation.z = r() * .15;
+    // en een tweede rij onder de zoldervloer
+    if (i % 2 === 0) { const o = doos(.12, .5, .34, vestKleur[(i + 1) % 4], ZR - .25, ZOLDER - .35, z + .05, lokaal, false); o.rotation.x = r() * .3 - .15; }
+  }
+
+  /* onder de zolder: links vakkenkast, midden klushoek, rechts de doorgang naar buiten */
+  const kastMat = mat('#C9C1B2'), vakMat = mat('#6E6A63');
+  // vakkenkast die rond loopt (zuidmuur en buitenmuur)
+  doos(2.9, 1.9, .5, kastMat, W + 1.5, 1.3, ZZ - .3, lokaal);
+  doos(.5, 1.9, 1.5, kastMat, W + .3, 1.3, ZZ - 1.3, lokaal);
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) doos(.55, .45, .02, vakMat, W + .5 + i * .68, .62 + j * .6, ZZ - .56, lokaal, false);
+  // klushoek: eigen kamertje met deur, twee kasten en een werkbank
+  const kZ0 = LZ - 1.4, kZ1 = LZ + 1.7;
+  doos(.1, ZOLDER - .3, kZ1 - kZ0, M.binnenwand, ZR, (ZOLDER + .3) / 2 + .02, (kZ0 + kZ1) / 2, lokaal);
+  doos(3, ZOLDER - .3, .1, M.binnenwand, W + 1.5, (ZOLDER + .3) / 2, kZ0, lokaal);
+  doos(3, ZOLDER - .3, .1, M.binnenwand, W + 1.5, (ZOLDER + .3) / 2, kZ1, lokaal);
+  doos(.04, 1.95, .85, mat('#6A4E36'), ZR + .06, 1.3, LZ + .9, lokaal, false); // deur
+  doos(.6, 1.8, .9, mat('#B4B7B3', { roughness: .4 }), W + .4, 1.2, LZ - .85, lokaal);
+  doos(.6, 1.8, .9, mat('#B4B7B3', { roughness: .4 }), W + .4, 1.2, LZ + .1, lokaal);
+  doos(.7, .08, 1.5, M.hout, W + 2.2, 1.2, LZ + .5, lokaal);
+  doos(.65, .85, .06, M.hout, W + 2.2, .75, LZ - .2, lokaal, false);
+  // doorgang naar buiten (deur in de buitenmuur) met een kast ernaast
+  doos(.1, 2.05, 1.05, mat('#6A4E36'), W - .1, 1.35, ZN + 1, lokaal, false);
+  doos(1.4, 1.9, .5, kastMat, W + 1.4, 1.3, kZ0 - .32, lokaal);
+  // trap naar de zolder, links langs de muur met de tv
+  for (let i = 0; i < 8; i++) doos(.28, .07, .85, M.hout, ZR + 2.3 - i * .29, .52 + i * .24, ZZ - .55, lokaal, false);
+  for (const dz of [-.12, -.98]) doos(2.7, .1, .06, M.hout, ZR + 1.2, 1.35, ZZ + dz, lokaal, false).rotation.z = -.64;
+  doos(2.7, .06, .06, M.hout, ZR + 1.2, 2.25, ZZ - 1, lokaal, false).rotation.z = -.64; // leuning
   // lamp in het lokaal (zichtbaar als het donker wordt)
   const lamp = new THREE.PointLight('#FFD9A8', 0, 14, 1.6); lamp.position.set(LX, 3.1, LZ); lokaal.add(lamp);
   lokaal.userData.lamp = lamp;
@@ -558,6 +640,11 @@ const dak = new THREE.Group(); gebouw.add(dak);
   doos(.45, 5.2, .45, M.kraan, -35, 2.6, 19, scene);
   doos(4.2, .4, .3, M.kraan, -36.9, 5, 19, scene);
   doos(1.4, .1, 1.4, M.kraan, -35, .35, 19, scene);
+  // insteekhaventje onder de kraan, met houten beschoeiing
+  doos(.25, .9, 9.6, M.steigerHout, -36.2, -.1, 17.8, scene);
+  doos(7, .9, .25, M.steigerHout, -39.6, -.1, 22.6, scene);
+  doos(.25, .9, 9, M.steigerHout, -43.6, -.1, 18, scene);
+  const takel = new THREE.Mesh(new THREE.CylinderGeometry(.02, .02, 3.2, 5), M.zwart); takel.position.set(-38.6, 3.4, 19); scene.add(takel);
   // seinmast met ra
   doos(.18, 11, .18, M.donkerblauw, -22, 5.5, -16, scene);
   const ra = doos(4, .1, .1, M.donkerblauw, -22, 8.2, -16, scene); ra.rotation.z = .18;
@@ -755,26 +842,36 @@ const bosGroep = new THREE.Group(); scene.add(bosGroep);
 const zetBomen = () => {
   bosGroep.clear();
   const kruinGeo = new THREE.IcosahedronGeometry(1, 2);
+  {
+    // bobbelig maken: elke hoek een eigen afstand, zelfde punt = zelfde waarde (geen gaten)
+    const pos = kruinGeo.attributes.position, v = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i);
+      const f = 1 + .16 * Math.sin(v.x * 7.1 + v.y * 3.3) * Math.cos(v.z * 6.7 - v.y * 2.1) + .08 * Math.sin(v.x * 17 + v.z * 13);
+      v.multiplyScalar(f); pos.setXYZ(i, v.x, v.y * .92, v.z);
+    }
+    kruinGeo.computeVertexNormals();
+  }
   const stamGeo = new THREE.CylinderGeometry(.18, .28, 1, 6);
   const tel = bomen.length;
-  const kruinen = new THREE.InstancedMesh(kruinGeo, new THREE.MeshStandardMaterial({ roughness: .95, flatShading: false }), tel * 3);
+  const kruinen = new THREE.InstancedMesh(kruinGeo, new THREE.MeshStandardMaterial({ roughness: .95, flatShading: false, map: bladTex }), tel * 5);
   const stammen = new THREE.InstancedMesh(stamGeo, mat('#5A4A3C'), tel);
   kruinen.castShadow = stammen.castShadow = true; kruinen.receiveShadow = true;
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), c = new THREE.Color();
   const r = zaad(77);
   const kl = winter
     ? { wilg: ['#8C8A6A', '#7E7A5E', '#9A9474'], boom: ['#7A6A58', '#6E5E4E', '#8A7A62'], struik: ['#6F6A52', '#7C735A'], populier: ['#7E7464', '#8A806C'] }
-    : { wilg: ['#7FA95A', '#6E9A4E', '#93B86C'], boom: ['#3F7A34', '#4E8A3E', '#36702E'], struik: ['#4F8A3E', '#5E9648'], populier: ['#5E9A4A', '#73A85A'] };
+    : { wilg: ['#8FA86A', '#7C9A5C', '#9DB27A'], boom: ['#4C6E36', '#5A7C40', '#43642F', '#66823F'], struik: ['#58773E', '#65844A'], populier: ['#5C7E42', '#6E8C4E'] };
   let k = 0;
   bomen.forEach((b, i) => {
     const h = (b.soort === 'populier' ? 9 : b.soort === 'wilg' ? 7 : b.soort === 'struik' ? 2.2 : 8) * b.s;
     p.set(b.x, h * .25, b.z); s.set(1, h * .5, 1);
     stammen.setMatrixAt(i, m4.compose(p, q.identity(), s));
-    const delen = b.soort === 'struik' ? 1 : b.soort === 'populier' ? 2 : 3;
-    for (let j = 0; j < 3; j++) {
+    const delen = b.soort === 'struik' ? 2 : b.soort === 'populier' ? 3 : 5;
+    for (let j = 0; j < 5; j++) {
       if (j >= delen) { s.set(0, 0, 0); kruinen.setMatrixAt(k++, m4.compose(p, q, s)); continue; }
-      const rr = (b.soort === 'populier' ? 1.3 : b.soort === 'struik' ? 1.6 : 2.6) * b.s * (winter ? .8 : 1) * (1 - j * .18);
-      p.set(b.x + (r() - .5) * rr * .8, h * (b.soort === 'populier' ? .55 + j * .25 : .62 + j * .14), b.z + (r() - .5) * rr * .8);
+      const rr = (b.soort === 'populier' ? 1.2 : b.soort === 'struik' ? 1.3 : 2.1) * b.s * (1 - j * .1);
+      p.set(b.x + (r() - .5) * rr * 1.3, h * (b.soort === 'populier' ? .5 + j * .2 : .55 + j * .09 + r() * .08), b.z + (r() - .5) * rr * 1.3);
       s.set(rr, rr * (b.soort === 'populier' ? 2.6 : b.soort === 'wilg' ? .85 : .9), rr);
       q.setFromEuler(new THREE.Euler(r(), r(), r()));
       kruinen.setMatrixAt(k, m4.compose(p, q, s));
@@ -790,7 +887,7 @@ zetBomen();
 // riet langs de oevers
 {
   const r = zaad(31), n = klein ? 900 : 1800;
-  const riet = new THREE.InstancedMesh(new THREE.ConeGeometry(.25, 1.6, 4), M.riet, n);
+  const riet = new THREE.InstancedMesh(new THREE.ConeGeometry(.1, 1.7, 3), M.riet, n);
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3();
   const oevers = [PLAS, EILAND_BOS, EILAND_STRAND];
   let k = 0;
@@ -966,48 +1063,7 @@ const zetTijd = (t) => {
   html.classList.toggle('is-nacht', t > .72);
 };
 
-/* =====================================================================
-   Klikken: overstag, en klikbare plekken
-   ===================================================================== */
-const raycaster = new THREE.Raycaster();
-const muis = new THREE.Vector2();
-const PLEKKEN = [
-  { naam: 'Naar WSA (CWO)', url: 'zeilen.html', vorm: { x0: -48, x1: -36, z0: -27, z1: 14, h: 8 } },
-  { naam: 'Naar Kampen', url: 'kampen.html', vorm: { x0: -170, x1: -50, z0: -96, z1: -6, h: 12 } },
-  { naam: 'Lid worden', url: 'lid-worden.html', vorm: { x0: -14, x1: 14, z0: -18, z1: 18, h: 6 } },
-  { naam: 'Naar Veiligheid', url: 'spullen.html', vorm: { x0: -160, x1: -54, z0: -234, z1: -136, h: 6 } }
-];
-const plekMeshes = PLEKKEN.map((p) => {
-  const v = p.vorm;
-  const m = new THREE.Mesh(new THREE.BoxGeometry(v.x1 - v.x0, v.h, v.z1 - v.z0), new THREE.MeshBasicMaterial({ visible: false }));
-  m.position.set((v.x0 + v.x1) / 2, v.h / 2, (v.z0 + v.z1) / 2); m.userData.plek = p; scene.add(m); return m;
-});
-const bootHit = new THREE.Mesh(new THREE.BoxGeometry(7, 9, 3.5), new THREE.MeshBasicMaterial({ visible: false }));
-bootHit.position.set(0, 3.5, 0); zeiler.add(bootHit);
-const label = document.createElement('div'); label.className = 'wereld-label'; label.hidden = true; document.body.appendChild(label);
-const overInhoud = (e) => e.target.closest && e.target.closest('a,button,input,select,textarea,label,summary,details,.blad,.kop,.voet,.hoofdstukken,.held__tekst,.aanboord,.wereld-knoppen');
-const raak = (e) => {
-  muis.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
-  raycaster.setFromCamera(muis, camera);
-  const h = raycaster.intersectObjects([bootHit, ...plekMeshes], false)[0];
-  if (!h) return null;
-  if (h.object === bootHit) return { boot: true, naam: 'Overstag!' };
-  return h.object.userData.plek;
-};
-document.addEventListener('mousemove', (e) => {
-  if (html.classList.contains('eenvoudig') || overInhoud(e)) { label.hidden = true; document.body.classList.remove('boot-hover'); return; }
-  const p = raak(e);
-  document.body.classList.toggle('boot-hover', !!p);
-  label.hidden = !p;
-  if (p) { label.textContent = p.naam; label.style.transform = `translate(${e.clientX + 16}px, ${e.clientY + 14}px)`; }
-}, { passive: true });
-document.addEventListener('click', (e) => {
-  if (html.classList.contains('eenvoudig') || overInhoud(e)) return;
-  const p = raak(e);
-  if (!p) return;
-  if (p.boot) wend();
-  else location.href = p.url;
-});
+/* Klikken op de achtergrond doet niets meer (op verzoek). */
 const wend = () => { if (vaart.wend > 0) return; vaart.wend = 1; vaart.richting *= -1; vaart.doelZijde *= -1; geluid.wend(); };
 
 /* =====================================================================
@@ -1066,7 +1122,7 @@ const toonKnoppen = () => {
 };
 geluidKnop.addEventListener('click', () => { geluidAan = !geluidAan; geluidAan ? geluid.aan() : geluid.uit(); toonKnoppen(); });
 seizoenKnop.addEventListener('click', () => { winter = !winter; winterKleuren(); legVloot(); zetBomen(); toonKnoppen(); });
-knoppen.append(seizoenKnop, geluidKnop); document.body.appendChild(knoppen); toonKnoppen();
+knoppen.append(geluidKnop); document.body.appendChild(knoppen); toonKnoppen();
 
 /* =====================================================================
    Startscherm "Kom aan boord"
@@ -1117,17 +1173,19 @@ const frame = (nu) => {
     const w = stand.a === 'nacht' ? 1 : glad(0, .45, stand.f);
     const bp = zeiler.position;
     const ry = zeiler.rotation.y, vooruit = new THREE.Vector3(Math.cos(ry), 0, -Math.sin(ry)), zij = new THREE.Vector3(Math.sin(ry), 0, Math.cos(ry));
+    // camera altijd aan de kant van het open water (binnenkant van de vaarbaan), nooit in de bomen
+    if (zij.x * (VAARBAAN.x - bp.x) + zij.z * (VAARBAAN.z - bp.z) < 0) zij.negate();
     const volg = bp.clone().addScaledVector(vooruit, -11).addScaledVector(zij, 13).add(new THREE.Vector3(0, 5, 0));
-    doelPos.lerp(volg, w); doelKijk.lerp(bp.clone().add(new THREE.Vector3(0, 2.6, 0)), w);
+    doelPos.lerp(volg, w); doelKijk.lerp(bp.clone().add(new THREE.Vector3(0, .8, 0)), w);
   }
   if (!rustig) {
-    doelPos.x += Math.sin(klok * .13) * .6 * (stand.a === 'intro' ? 6 : 1);
-    doelPos.y += Math.sin(klok * .21) * .3;
+    doelPos.x += Math.sin(klok * .11) * .25 * (stand.a === 'intro' ? 4 : 1); // heel rustig ademen, geen schommelen
   }
   if (eerste) { camPos.copy(doelPos); camKijk.copy(doelKijk); eerste = false; }
   const k = rustig ? 1 : 1 - Math.pow(.0015, dt);
   camPos.lerp(doelPos, k); camKijk.lerp(doelKijk, k);
   camera.position.copy(camPos); camera.lookAt(camKijk);
+  if (debugCam) { camera.position.set(debugCam[0], debugCam[1], debugCam[2]); camera.lookAt(debugCam[3], debugCam[4], debugCam[5]); }
 
   // dak open boven ons lokaal
   const open = dakOpen(stand);
@@ -1159,8 +1217,6 @@ const frame = (nu) => {
     zeiler.userData.fokTuig.rotation.y = .3 * v.zijde;
   }
 
-  // schommel in het lokaal
-  buizen.forEach((s) => { s.rotation.z = Math.sin(klok * 1.6) * .35; s.rotation.x = Math.sin(klok * .8) * .08; });
   // kampvuur flakkert
   if (kampvuur.userData.vlam.visible) { const f = .85 + Math.sin(klok * 13) * .1 + Math.sin(klok * 7.7) * .08; kampvuur.userData.vlam.scale.set(f, f * 1.1, f); kampvuur.userData.licht.intensity *= f; }
   // eenden zwemmen rondjes
