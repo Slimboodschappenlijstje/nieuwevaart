@@ -126,6 +126,62 @@
     });
   });
 
+  /* ---------- Eenvoudige weergave (zonder bewegend decor) ---------- */
+  var html = document.documentElement;
+  var menu = $('#hoofdmenu');
+  if (menu && $('#decor')) {
+    var weergave = document.createElement('button');
+    weergave.type = 'button';
+    weergave.className = 'weergave';
+    var toonWeergave = function () {
+      var aan = html.classList.contains('eenvoudig');
+      weergave.textContent = aan ? 'Volledige weergave' : 'Eenvoudige weergave';
+      weergave.setAttribute('aria-pressed', String(aan));
+    };
+    weergave.addEventListener('click', function () {
+      var aan = !html.classList.contains('eenvoudig');
+      html.classList.toggle('eenvoudig', aan);
+      try { localStorage.setItem('nieuwevaart-eenvoudig', aan ? '1' : '0'); } catch (e) { /* geen opslag */ }
+      if (window.NVDecor) { if (aan) window.NVDecor.stop(); else window.NVDecor.start(); }
+      toonWeergave();
+    });
+    menu.appendChild(weergave);
+    toonWeergave();
+  }
+
+  /* ---------- Hoofdstukken rechts op de homepage ---------- */
+  var hoofdstukken = $$('[data-hoofdstuk]');
+  if (hoofdstukken.length > 1) {
+    var nav = document.createElement('nav');
+    nav.className = 'hoofdstukken';
+    nav.setAttribute('aria-label', 'Hoofdstukken');
+    var lijst = document.createElement('ol');
+    var links = hoofdstukken.map(function (h) {
+      var li = document.createElement('li');
+      var a = document.createElement('a');
+      a.href = '#' + h.id;
+      var naam = document.createElement('span');
+      naam.className = 'hoofdstukken__naam';
+      naam.textContent = h.getAttribute('data-hoofdstuk');
+      var streep = document.createElement('span');
+      streep.className = 'hoofdstukken__streep';
+      a.appendChild(naam); a.appendChild(streep);
+      li.appendChild(a); lijst.appendChild(li);
+      return a;
+    });
+    nav.appendChild(lijst);
+    document.body.appendChild(nav);
+    var actief = function () {
+      var midden = window.innerHeight * .45, kies = 0;
+      hoofdstukken.forEach(function (h, i) { if (h.getBoundingClientRect().top < midden) kies = i; });
+      links.forEach(function (a, i) {
+        if (i === kies) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
+      });
+    };
+    actief();
+    window.addEventListener('scroll', actief, { passive: true });
+  }
+
   // Uitklapmenu achter de drie streepjes
   var meer = $('.meer'), meerKnop = $('.meer__knop');
   if (meer && meerKnop) {

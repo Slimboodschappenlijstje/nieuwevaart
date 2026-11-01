@@ -12,3 +12,11 @@ dan gebruikt hij `agenda.json`. Die wordt elk uur ververst door de GitHub-workfl
 Vloot (WSA-pagina), Kaagcup-prijzen (Kampen), geschiedenis (Lid worden) en de pagina Voor leiding komen
 live van wiki.vadedo.nl. Welke pagina's waar staan, regel je in `wiki-instellingen.js`.
 Terugval: `wiki.json`, elk uur ververst door dezelfde GitHub-workflow.
+
+## Decor en stijl
+Het bewegende water (boot 1798, eilandje met tentjes, eenden, dag naar nacht met toplicht) staat in `scene.js`
+en wordt getekend op `<canvas id="decor">`. Op de homepage loopt de tijd mee met het scrollen,
+op de andere pagina's volgt hij de echte tijd in Leiderdorp. Klik op de boot en hij gaat overstag.
+Testen op een vast tijdstip: zet `?tijd=0.8` achter het adres (0 = middag, 1 = nacht).
+Bezoekers kunnen via "Eenvoudige weergave" het decor uitzetten; bij "minder beweging" staat het stil.
+Lettertypen (Montserrat en Instrument Serif) staan in `fonts/`.

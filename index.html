@@ -16,7 +16,7 @@
 <link rel="icon" type="image/png" href="img/favicon-64.png">
 <link rel="apple-touch-icon" href="img/logo-192.png">
 <meta property="og:image" content="https://nieuwevaart.onrender.com/img/og.png">
-<script>document.documentElement.classList.add('js');</script>
+<script>document.documentElement.classList.add('js');try{if(localStorage.getItem('nieuwevaart-eenvoudig')==='1')document.documentElement.classList.add('eenvoudig')}catch(e){}</script>
 <link rel="stylesheet" href="style.css">
 <script type="application/ld+json">
 {
@@ -42,8 +42,9 @@
 }
 </script>
 </head>
-<body>
+<body class="thuis">
 <a class="skiplink" href="#inhoud">Naar de inhoud</a>
+<div class="decor" aria-hidden="true"><canvas id="decor" data-modus="scroll"></canvas></div>
 
 <header class="kop" id="kop">
   <div class="wrap kop__inner">
@@ -76,95 +77,43 @@
 
 <main id="inhoud">
 
-  <section class="held" id="top" aria-labelledby="titel">
-    <div class="wrap held__grid">
+  <section class="held" id="top" aria-labelledby="titel" data-hoofdstuk="Intro">
+    <div class="wrap">
       <div class="held__tekst">
-        <h1 id="titel">De Nieuwe <span class="regel">Vaart</span></h1>
+        <p class="pil"><span class="pil__stip" aria-hidden="true"></span>Elke zaterdag vanaf 12.00 uur</p>
+        <p class="bovenkop">Scouting VaDeDo Leiderdorp</p>
+        <h1 id="titel">De Nieuwe <em>Vaart.</em></h1>
         <p class="held__intro">Waterscouting voor meiden van 11 tot en met 14 jaar. Op zaterdag vanaf 12.00 uur tuigen we de lelievletten op en gaan we het water op. Hier vind je alles voor de opkomsten en de kampen.</p>
         <div class="knoppen">
           <a class="knop knop--das" href="kampen.html">Kampen en paklijsten</a>
-          <a class="knop knop--rand" href="index.html#spullen">Wat neem je mee?</a>
+          <a class="knop knop--lijn" href="index.html#spullen">Wat neem je mee? <span aria-hidden="true">↓</span></a>
         </div>
         <p class="held__groep">Een speltak van <a href="https://www.vadedo.nl/">Scouting Van der Does-Liethorp (VaDeDo)</a> in Leiderdorp.</p>
       </div>
-      <div class="held__beeld">
-        <svg viewBox="0 70 600 490" role="img" aria-labelledby="boot-titel">
-          <title id="boot-titel">Een lelievlet onder zeil op de Vadedoplas, met in de verte een poldermolen</title>
-          <!-- verre oever met molen -->
-          <path d="M0 500C22 496 52 492 92 490c38-1 66 1 86 7v3Z" fill="#B9C7BF"/>
-          <path d="M116 491c0-9 7-15 14-12 3-7 14-7 16 1 8 0 10 8 5 11Z" fill="#A8B8AE"/>
-          <g fill="#8E9E97">
-            <path d="M53 495 58 456h12l5 39Z"/>
-            <path d="M56 458c3-9 13-9 16 0Z"/>
-          </g>
-          <g stroke="#8E9E97" stroke-linecap="round">
-            <path d="M64 451 90 436M64 451 49 425M64 451 38 466M64 451 79 477" stroke-width="3.2"/>
-            <path d="M74 444 85 437M58 440 52 430M54 457 43 463M70 462 76 472" stroke-width="7" stroke-opacity=".45"/>
-          </g>
-          <!-- riet -->
-          <g fill="none" stroke="#6F7D52" stroke-width="3" stroke-linecap="round">
-            <path d="M518 500c2-28 6-48 14-70"/>
-            <path d="M530 500c0-26 6-46 16-62"/>
-            <path d="M543 500c2-30 11-52 21-66"/>
-            <path d="M556 500c-2-24 4-44 16-56"/>
-            <path d="M568 500c4-26 14-44 26-54"/>
-            <path d="M582 500c0-20 6-34 16-42"/>
-          </g>
-          <g fill="#7A5B3C">
-            <rect x="528" y="420" width="7" height="22" rx="3.5" transform="rotate(18 531.5 431)"/>
-            <rect x="559" y="424" width="7" height="22" rx="3.5" transform="rotate(30 562.5 435)"/>
-            <rect x="589" y="436" width="7" height="20" rx="3.5" transform="rotate(44 592.5 446)"/>
-          </g>
-          <!-- onderwaterschip -->
-          <path d="M178 500c8 8 20 13 36 14h190c18-1 30-6 36-14Z" fill="#22071A" opacity=".45"/>
-          <!-- want -->
-          <path d="M352 132 445 447M352 134 318 466" stroke="#A6849A" stroke-width="1.4" fill="none"/>
-          <!-- zeilen: worden bij het laden gehesen -->
-          <g class="zeilen">
-            <path d="M349 172 217 101Q186 270 190 441l159-4Z" fill="#fff" stroke="#4F1440" stroke-width="2.5" stroke-linejoin="round"/>
-            <path d="M204 186 349 198M198 237 349 248M194 288 349 297M191 339 349 346M190 390 349 394" stroke="#EED6E3" stroke-width="1.5" fill="none"/>
-            <g transform="translate(250 196) scale(1.15)" fill="#C2286F">
-              <path d="M20 0c7 9 8 20 0 31C12 20 13 9 20 0Z"/>
-              <path d="M17 31C9 32 1 28 1 19c0-7 6-10 11-7-4 2-4 9 1 11 2 2 4 5 4 8Z"/>
-              <path d="M23 31c8 1 16-3 16-12 0-7-6-10-11-7 4 2 4 9-1 11-2 2-4 5-4 8Z"/>
-              <path d="M9 31h22v4H9Z"/>
-              <path d="M17 35l3 11 3-11ZM11 35c0 5 3 7 5 6-2-2-2-4-1-6ZM29 35c0 5-3 7-5 6 2-2 2-4 1-6Z"/>
-            </g>
-            <text class="zeilnummer" x="273" y="316" text-anchor="middle" font-size="34" fill="#4F1440">1798</text>
-            <path d="M355 188 441 443Q410 441 384 432Q376 308 355 188Z" fill="#fff" stroke="#4F1440" stroke-width="2.5" stroke-linejoin="round"/>
-            <path d="M352 170 214 97" stroke="#4F1440" stroke-width="5" stroke-linecap="round"/>
-          </g>
-          <!-- mast en giek -->
-          <path d="M352 128V474" stroke="#4F1440" stroke-width="6" stroke-linecap="round"/>
-          <path d="M352 440 184 446" stroke="#4F1440" stroke-width="5" stroke-linecap="round"/>
-          <path class="wimpel" d="M352 130 320 137l32 7Z" fill="#C2286F"/>
-          <!-- romp -->
-          <path d="M168 462c82 12 192 10 280-16-1 19-4 38-8 54H178c-4-12-8-25-10-38Z" fill="#4F1440"/>
-          <path d="M173 470c79 11 187 9 272-15" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".9"/>
-          <!-- water -->
-          <path d="M450 509q8-5 16 0t16 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".6"/>
-          <g stroke="#D98BB7" stroke-width="2.5" stroke-linecap="round" opacity=".75">
-            <path d="M198 525h70M302 531h108M228 541h68"/>
-          </g>
-          <text class="kaartlabel" x="580" y="546" text-anchor="end">Vadedoplas</text>
-        </svg>
-      </div>
     </div>
+    <p class="scrollhint" aria-hidden="true">Scroll om verder te varen</p>
   </section>
 
-  <section class="sectie binnenkort" id="binnenkort" aria-labelledby="binnenkort-titel">
+  <section class="sectie binnenkort" id="binnenkort" aria-labelledby="binnenkort-titel" data-hoofdstuk="Binnenkort">
     <div class="wrap">
+      <div class="blad">
+      <p class="label">Agenda</p>
       <div class="binnenkort__kop">
         <h2 id="binnenkort-titel">Binnenkort</h2>
         <a class="knop knop--rand knop--klein" href="agenda.html">Hele agenda</a>
       </div>
       <div id="binnenkort-lijst" aria-live="polite"><p class="agenda-leeg">Agenda laden…</p></div>
+      </div>
     </div>
   </section>
 
-  <section class="sectie" id="zaterdag" aria-labelledby="zaterdag-titel">
+  <div class="doorkijk" aria-hidden="true"><p>Eind van de middag</p></div>
+
+  <section class="sectie" id="zaterdag" aria-labelledby="zaterdag-titel" data-hoofdstuk="Zaterdag">
     <div class="wrap">
+      <div class="blad">
       <div class="kolom-tekst">
+        <p class="label">Opkomst</p>
         <h2 id="zaterdag-titel">Een zaterdag bij de Nieuwe Vaart</h2>
         <p class="intro">Zo ziet een zaterdag in het vaarseizoen eruit.</p>
       </div>
@@ -207,12 +156,17 @@
           <p>Is je dochter er een keer niet? Meld haar dan af via de <a href="https://app.scouting.nl/app/#/login?lang=nl_nl" target="_blank" rel="noopener">Scouting App<span class="sr-only"> (opent in een nieuw tabblad)</span></a>, het liefst vóór zaterdag. Zonder afmelding proberen we je te bellen, want er kan onderweg iets gebeurd zijn. Ziek op zaterdag zelf? Dan kun je haar ook nog afmelden.</p>
         </div>
       </div>
+      </div>
     </div>
   </section>
 
-  <section class="sectie sectie--mist" id="spullen" aria-labelledby="spullen-titel">
+  <div class="doorkijk" aria-hidden="true"><p>Zonsondergang boven de plas</p></div>
+
+  <section class="sectie" id="spullen" aria-labelledby="spullen-titel" data-hoofdstuk="Meenemen">
     <div class="wrap">
+      <div class="blad">
       <div class="kolom-tekst">
+        <p class="label">Spullen</p>
         <h2 id="spullen-titel">Wat neem je mee?</h2>
         <p class="intro">Je hebt geen dure spullen nodig. Met kleding die nat en vies mag worden, een regenpak en droge reservekleren kom je al heel ver.</p>
       </div>
@@ -258,8 +212,11 @@
           </ul>
         </div>
       </div>
+      </div>
     </div>
   </section>
+
+  <div class="doorkijk doorkijk--laatste" aria-hidden="true"><p>Toplicht aan. Welterusten!</p></div>
 
 </main>
 
@@ -288,6 +245,7 @@
 </footer>
 
 <script src="script.js"></script>
+<script src="scene.js"></script>
 <script src="agenda-instellingen.js"></script>
 <script src="agenda-ics.js"></script>
 <script src="agenda.js"></script>
