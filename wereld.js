@@ -439,13 +439,6 @@ const binnen = new THREE.Group(); gebouw.add(binnen);
   // toiletten en douches bovenin het midden
   doos(6, H, .15, M.binnenwand, 0, H / 2 + .3, -10.5, binnen);
   doos(3.6, H, 4, M.binnenwand, -1.2, H / 2 + .3, -15, binnen);
-  // namen op de vloer (zoals op de plattegrond)
-  const namen = [['Stam', -8, -14], ['Vaart', -8, -7], ['Kleine Vaart', -8, 0], ['Wilde Vaart', -8, 14],
-    ['Bakboord', 8, -14], ['Stuurboord', 8, -7], ['Kabouters', 8, 0], ['Bevers', 8, 7], ['Keuken', 6, 14], ['Hal', 0, 4]];
-  for (const [n, x, z] of namen) {
-    const p = new THREE.Mesh(new THREE.PlaneGeometry(6, 1.1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: tekstTextuur(n, { kleur: 'rgba(60,40,55,.55)', font: '500 110px Montserrat, Arial, sans-serif' }), transparent: true, depthWrite: false }));
-    p.position.set(x, .4, z); binnen.add(p);
-  }
 }
 
 /* ---------- Ons lokaal: De Nieuwe Vaart (vroeger het meisjeslokaal) ---------- */
@@ -468,16 +461,14 @@ const LX = -8, LZ = 7; // midden van het lokaal (10 x 7 m)
   // ramen op zolderhoogte in de buitenmuur
   const raamBinnen = mat('#CFE0E8', { roughness: .2, emissive: '#9FC3D6', emissiveIntensity: .35 });
   for (let j = -1; j <= 1; j++) doos(.04, 1.1, 1.25, raamBinnen, W + .12, 3.05, LZ + j * 1.4, lokaal, false);
-  // naam op de vloer, in roze
-  const n = new THREE.Mesh(new THREE.PlaneGeometry(5.4, 1), new THREE.MeshBasicMaterial({ map: tekstTextuur('De Nieuwe Vaart', { kleur: '#C2286F', font: 'italic 400 128px "Instrument Serif", Georgia, serif' }), transparent: true, depthWrite: false }));
-  n.geometry.rotateX(-Math.PI / 2); n.position.set(-7.6, .42, LZ - .6); lokaal.add(n);
-
   /* bankenhoek links (zuidoost): L-bank, tafel in het midden, tv aan de muur, radio in de hoek */
   const bank = (b, d, x, z) => { doos(b, .45, d, M.bank, x, .62, z, lokaal); doos(b, .2, d * .9, M.kussen, x, .95, z, lokaal); };
   const rug = (b, d, x, z) => doos(b, .55, d, M.kussen, x, 1.2, z, lokaal);
-  bank(.95, 3.2, -3.65, ZZ - 1.75); rug(.25, 3.2, -3.28, ZZ - 1.75);
-  bank(3.2, .95, -5.55, ZZ - 3.1); rug(3.2, .25, -5.55, ZZ - 3.48);
-  doos(1.3, .45, .8, M.tafel, -5.3, .6, ZZ - 1.6, lokaal);
+  // lange grijze bank tegen de roze muur bij de ingang (zit met je gezicht naar de zolder), met een chaise aan het eind
+  bank(1, 3.9, -3.7, ZZ - 2.2); rug(.28, 3.9, -3.3, ZZ - 2.2);
+  bank(1.7, .95, -4.85, ZZ - 3.65);
+  doos(.3, .55, .95, M.kussen, -3.45, 1.15, ZZ - .5, lokaal); // armleuning bij de tv-muur
+  doos(1.1, .45, 1.1, M.tafel, -5.6, .6, ZZ - 1.9, lokaal);
   doos(1.3, .06, 1.25, M.zwart, -5.6, 1.85, ZZ - .07, lokaal, false); // tv
   doos(1.5, .5, .4, M.hout, -5.6, .55, ZZ - .25, lokaal); // kastje onder de tv
   doos(.45, .3, .25, mat('#2F3B3A'), -4.75, .95, ZZ - .25, lokaal); // radio in de hoek
@@ -526,15 +517,17 @@ const LX = -8, LZ = 7; // midden van het lokaal (10 x 7 m)
   /* zolder langs de waterkant, met smalle slaapbanken in U-vorm */
   doos(3, .15, 6.75, M.hout, W + 1.5, ZOLDER, LZ, lokaal);
   for (let i = 0; i < 5; i++) doos(.1, ZOLDER - .3, .1, M.hout, ZR, (ZOLDER + .3) / 2, LZ - 3.2 + i * 1.6, lokaal);
-  doos(.06, .06, 6.7, M.hout, ZR, ZOLDER + .95, LZ, lokaal, false); // reling
-  for (let i = 0; i < 12; i++) doos(.04, .9, .04, M.hout, ZR, ZOLDER + .5, LZ - 3.1 + i * .56, lokaal, false);
+  doos(.06, .06, 5.6, M.hout, ZR, ZOLDER + .95, LZ - .55, lokaal, false); // reling (open bij de trap)
+  for (let i = 0; i < 11; i++) doos(.04, .9, .04, M.hout, ZR, ZOLDER + .5, LZ - 3.3 + i * .55, lokaal, false);
   const matras = mat('#55585C');
-  doos(.75, .2, 6.6, matras, W + .45, ZOLDER + .17, LZ, lokaal); // langs de buitenmuur
-  doos(2.2, .2, .75, matras, W + 1.85, ZOLDER + .17, ZN + .45, lokaal); // noord
-  doos(2.2, .2, .75, matras, W + 1.85, ZOLDER + .17, ZZ - .45, lokaal); // zuid
+  const zbank = (b, d, x, z) => { doos(b, .4, d, mat('#2E2F33'), x, ZOLDER + .28, z, lokaal); doos(b * .96, .16, d * .98, matras, x, ZOLDER + .56, z, lokaal); };
+  zbank(.7, 6.5, W + .4, LZ);                 // lange bank onder de ramen
+  zbank(.7, 5.1, ZR - .42, LZ - .65);         // lange bank langs de reling
+  zbank(1.4, .7, W + 1.45, ZN + .4);          // dwars aan de noordkant: de U is dicht
+  doos(.06, .7, 6.5, matras, W + .1, ZOLDER + .95, LZ, lokaal, false); // rugkussens tegen de muur
   // reddingsvesten: een hele rij hangt aan de voorkant van de zolder, zoals op de foto's
   const r = zaad(9), vestKleur = [mat('#E8541E'), mat('#D9461C'), mat('#F06A2A'), mat('#C93F1E')];
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 26; i++) {
     const z = LZ - 3.15 + i * .215 + r() * .05;
     const v = doos(.12, .58 + r() * .12, .36, vestKleur[i % 4], ZR + .12 + r() * .05, ZOLDER + .55 + r() * .12, z, lokaal, false);
     v.rotation.x = r() * .3 - .15; v.rotation.z = r() * .15;
@@ -562,15 +555,17 @@ const LX = -8, LZ = 7; // midden van het lokaal (10 x 7 m)
   doos(.1, 2.05, 1.05, mat('#6A4E36'), W - .1, 1.35, ZN + 1, lokaal, false);
   doos(1.4, 1.9, .5, kastMat, W + 1.4, 1.3, kZ0 - .32, lokaal);
   // trap naar de zolder, links langs de muur met de tv
-  for (let i = 0; i < 8; i++) doos(.28, .07, .85, M.hout, ZR + 2.3 - i * .29, .52 + i * .24, ZZ - .55, lokaal, false);
-  for (const dz of [-.12, -.98]) doos(2.7, .1, .06, M.hout, ZR + 1.2, 1.35, ZZ + dz, lokaal, false).rotation.z = -.64;
-  doos(2.7, .06, .06, M.hout, ZR + 1.2, 2.25, ZZ - 1, lokaal, false).rotation.z = -.64; // leuning
+  const treden = 9, tredeH = (ZOLDER - .3) / treden, tredeD = .27;
+  for (let i = 0; i < treden; i++) doos(tredeD + .03, .06, .85, M.hout, ZR + .15 + (treden - i) * tredeD, .3 + (i + 1) * tredeH, ZZ - .55, lokaal, false);
+  const lengte = Math.hypot(treden * tredeD, ZOLDER - .3), hoek = Math.atan2(ZOLDER - .3, treden * tredeD);
+  for (const dz of [-.1, -1]) { const b = doos(lengte, .2, .05, M.hout, ZR + .15 + treden * tredeD / 2, .3 + (ZOLDER - .3) / 2, ZZ + dz, lokaal, false); b.rotation.z = -hoek; }
+  const leun = doos(lengte, .06, .06, M.hout, ZR + .15 + treden * tredeD / 2, .3 + (ZOLDER - .3) / 2 + .9, ZZ - 1.03, lokaal, false); leun.rotation.z = -hoek;
   // lamp in het lokaal (zichtbaar als het donker wordt)
   const lamp = new THREE.PointLight('#FFD9A8', 0, 14, 1.6); lamp.position.set(LX, 3.1, LZ); lokaal.add(lamp);
   lokaal.userData.lamp = lamp;
   // bordje boven de deur in de hal
   const deurbord = new THREE.Mesh(new THREE.PlaneGeometry(2.4, .45), new THREE.MeshStandardMaterial({ map: tekstTextuur('De Nieuwe Vaart', { achter: '#4F1440', kleur: '#ffffff', b: 1024, h: 192, font: 'italic 400 120px "Instrument Serif", Georgia, serif' }) }));
-  deurbord.position.set(-2.9, 2.75, LZ); deurbord.rotation.y = Math.PI / 2; lokaal.add(deurbord);
+  deurbord.position.set(-2.9, 2.75, LZ - 2); deurbord.rotation.y = Math.PI / 2; lokaal.add(deurbord);
 }
 
 /* ---------- Het dak: vlinderdak met lichtkoepels in het midden ---------- */
