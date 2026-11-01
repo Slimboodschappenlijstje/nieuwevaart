@@ -458,12 +458,16 @@ const LX = -8, LZ = 7; // midden van het lokaal (10 x 7 m)
   // achterin langs de waterkant de zolder met slaapbanken in U-vorm.
   const W = -B / 2 + .2, ZN = LZ - 3.42, ZZ = LZ + 3.42, ZOLDER = 2.2, ZR = W + 3; // ZR = rand van de zolder
   doos(9.6, H, .1, M.grijsWand, LX, H / 2 + .3, ZZ, lokaal, false);
-  doos(9.6, H, .1, M.grijsWand, LX, H / 2 + .3, ZN, lokaal, false);
-  doos(.1, H, 6.7, M.grijsWand, W + .05, H / 2 + .3, LZ, lokaal, false);
-  doos(.06, H, 3.2, M.rozeWand, -3.12, H / 2 + .3, LZ + 1.7, lokaal, false); // roze stuk naast de deur
+  doos(9.6, H - 1.3, .1, M.rozeWand, LX, (H - 1.3) / 2 + 1.6, ZN, lokaal, false); // rechtermuur: roze met zwart onderin
+  doos(9.6, 1.3, .1, mat('#26272A'), LX, .95, ZN, lokaal, false);
+  doos(.1, ZOLDER, 6.7, M.grijsWand, W + .05, ZOLDER / 2 + .3, LZ, lokaal, false);
+  doos(.1, H - ZOLDER + .3, 6.7, mat('#B8265F'), W + .05, (H + ZOLDER + .3) / 2 + .15, LZ, lokaal, false); // zolder: donkerroze
+  doos(.06, H, 2.6, M.rozeWand, -3.12, H / 2 + .3, LZ + 2, lokaal, false); // roze muur bij de bankenhoek
+  doos(.06, H, 2.6, M.rozeWand, -3.12, H / 2 + .3, LZ - 2, lokaal, false);
   doos(9.6, .04, 6.7, mat('#8E8B86', { flatShading: false }), LX, .38, LZ, lokaal, false);
   // ramen op zolderhoogte in de buitenmuur
-  for (let j = -1; j <= 1; j++) doos(.04, 1.1, 1.25, M.raamGlas, W + .12, 3.05, LZ + j * 1.4, lokaal, false);
+  const raamBinnen = mat('#CFE0E8', { roughness: .2, emissive: '#9FC3D6', emissiveIntensity: .35 });
+  for (let j = -1; j <= 1; j++) doos(.04, 1.1, 1.25, raamBinnen, W + .12, 3.05, LZ + j * 1.4, lokaal, false);
   // naam op de vloer, in roze
   const n = new THREE.Mesh(new THREE.PlaneGeometry(5.4, 1), new THREE.MeshBasicMaterial({ map: tekstTextuur('De Nieuwe Vaart', { kleur: '#C2286F', font: 'italic 400 128px "Instrument Serif", Georgia, serif' }), transparent: true, depthWrite: false }));
   n.geometry.rotateX(-Math.PI / 2); n.position.set(-7.6, .42, LZ - .6); lokaal.add(n);
@@ -476,8 +480,7 @@ const LX = -8, LZ = 7; // midden van het lokaal (10 x 7 m)
   doos(1.3, .45, .8, M.tafel, -5.3, .6, ZZ - 1.6, lokaal);
   doos(1.3, .06, 1.25, M.zwart, -5.6, 1.85, ZZ - .07, lokaal, false); // tv
   doos(1.5, .5, .4, M.hout, -5.6, .55, ZZ - .25, lokaal); // kastje onder de tv
-  doos(.55, .7, .45, M.hout, -7.6, .65, ZZ - .3, lokaal); // hoekkastje
-  doos(.4, .25, .2, mat('#2F3B3A'), -7.6, 1.13, ZZ - .3, lokaal); // radio
+  doos(.45, .3, .25, mat('#2F3B3A'), -4.75, .95, ZZ - .25, lokaal); // radio in de hoek
   const bordje = (tekst, b, h, achter, kl, x, y, z, font) => {
     const p = new THREE.Mesh(new THREE.PlaneGeometry(b, h), new THREE.MeshStandardMaterial({ map: tekstTextuur(tekst, { achter, kleur: kl, b: 1024, h: Math.round(1024 * h / b), font }), roughness: .5 }));
     p.position.set(x, y, z); p.rotation.y = Math.PI; lokaal.add(p); return p;
@@ -500,34 +503,43 @@ const LX = -8, LZ = 7; // midden van het lokaal (10 x 7 m)
     p.position.set(-4.1, 3.3, ZZ - .07); p.rotation.y = Math.PI; lokaal.add(p);
   }
 
-  /* rechtermuur (noord): riemen en fokken */
-  const riemMat = mat('#B08850', { roughness: .6 });
-  for (let i = 0; i < 9; i++) {
-    const r = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, 2.9, 6), riemMat);
-    r.position.set(-6.6 + i * .2, 1.85, ZN + .14); r.rotation.z = .05; lokaal.add(r);
-    const blad = doos(.13, .5, .03, riemMat, -6.6 + i * .2, .65, ZN + .14, lokaal, false); blad.rotation.z = .05;
+  /* rechtermuur (noord, roze met zwart): roeren en zwaarden onderin, riemen en fokken */
+  const roerMat = mat('#8A5A48', { roughness: .8 });
+  [[-4.2, .9, .8], [-5.2, .7, .65], [-6.1, 1, .75], [-7, .8, .7]].forEach(([x, b, h], i) => {
+    const roer = doos(b, h, .05, roerMat, x, .3 + h / 2, ZN + .22, lokaal, false); roer.rotation.x = -.12;
+    doos(.06, 1.1, .06, mat('#3E5E8A'), x - b * .25, .9 + h * .4, ZN + .14, lokaal, false); // helmstok
+  });
+  const riemMat = mat('#C49A5A', { roughness: .6 });
+  for (let i = 0; i < 10; i++) {
+    const r = new THREE.Mesh(new THREE.CylinderGeometry(.035, .035, 3.3, 6), riemMat);
+    r.position.set(-8.1 - i * .17, 1.95, ZN + .16 + (i % 2) * .08); r.rotation.z = .06 * (i % 3 - 1); lokaal.add(r);
+    doos(.14, .6, .04, riemMat, -8.1 - i * .17, .62, ZN + .16 + (i % 2) * .08, lokaal, false);
   }
-  const fokMat = new THREE.MeshStandardMaterial({ color: '#F3EFE6', side: THREE.DoubleSide, roughness: .9 });
+  const fokMat = new THREE.MeshStandardMaterial({ color: '#EDE8DC', side: THREE.DoubleSide, roughness: .95 });
   for (let i = 0; i < 3; i++) {
     const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, .9, 0, 0, .1, -2.1, 0], 3)); g.computeVertexNormals();
-    const f = new THREE.Mesh(g, fokMat); f.position.set(-4.7 + i * .55, 3.1, ZN + .1 + i * .03); lokaal.add(f);
+    g.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, .7, 0, 0, .15, -2.3, 0, .7, 0, 0, .55, -2.2, 0, .15, -2.3, 0], 3)); g.computeVertexNormals();
+    const f = new THREE.Mesh(g, fokMat); f.position.set(-5.6 + i * .5, 3.5, ZN + .3 + i * .05); lokaal.add(f);
   }
+  for (let i = 0; i < 4; i++) doos(.04, 1.5, .04, M.zwart, -4.5 + i * .5, 2.9, ZN + .12, lokaal, false); // lijnen aan de haak
 
   /* zolder langs de waterkant, met smalle slaapbanken in U-vorm */
   doos(3, .15, 6.75, M.hout, W + 1.5, ZOLDER, LZ, lokaal);
   for (let i = 0; i < 5; i++) doos(.1, ZOLDER - .3, .1, M.hout, ZR, (ZOLDER + .3) / 2, LZ - 3.2 + i * 1.6, lokaal);
   doos(.06, .06, 6.7, M.hout, ZR, ZOLDER + .95, LZ, lokaal, false); // reling
   for (let i = 0; i < 12; i++) doos(.04, .9, .04, M.hout, ZR, ZOLDER + .5, LZ - 3.1 + i * .56, lokaal, false);
-  const matras = mat('#2C3E66');
+  const matras = mat('#55585C');
   doos(.75, .2, 6.6, matras, W + .45, ZOLDER + .17, LZ, lokaal); // langs de buitenmuur
   doos(2.2, .2, .75, matras, W + 1.85, ZOLDER + .17, ZN + .45, lokaal); // noord
   doos(2.2, .2, .75, matras, W + 1.85, ZOLDER + .17, ZZ - .45, lokaal); // zuid
-  // zwemvesten aan de reling
-  const r = zaad(9);
-  for (let i = 0; i < 8; i++) {
-    const v = doos(.34, .45, .1, M.oranje, ZR + .08, ZOLDER + .55 + r() * .2, LZ - 2.6 + i * .7 + r() * .15, lokaal, false);
-    v.rotation.y = Math.PI / 2 + r() * .4 - .2;
+  // reddingsvesten: een hele rij hangt aan de voorkant van de zolder, zoals op de foto's
+  const r = zaad(9), vestKleur = [mat('#E8541E'), mat('#D9461C'), mat('#F06A2A'), mat('#C93F1E')];
+  for (let i = 0; i < 30; i++) {
+    const z = LZ - 3.15 + i * .215 + r() * .05;
+    const v = doos(.12, .58 + r() * .12, .36, vestKleur[i % 4], ZR + .12 + r() * .05, ZOLDER + .55 + r() * .12, z, lokaal, false);
+    v.rotation.x = r() * .3 - .15; v.rotation.z = r() * .15;
+    // en een tweede rij onder de zoldervloer
+    if (i % 2 === 0) { const o = doos(.12, .5, .34, vestKleur[(i + 1) % 4], ZR - .25, ZOLDER - .35, z + .05, lokaal, false); o.rotation.x = r() * .3 - .15; }
   }
 
   /* onder de zolder: links vakkenkast, midden klushoek, rechts de doorgang naar buiten */
@@ -549,9 +561,10 @@ const LX = -8, LZ = 7; // midden van het lokaal (10 x 7 m)
   // doorgang naar buiten (deur in de buitenmuur) met een kast ernaast
   doos(.1, 2.05, 1.05, mat('#6A4E36'), W - .1, 1.35, ZN + 1, lokaal, false);
   doos(1.4, 1.9, .5, kastMat, W + 1.4, 1.3, kZ0 - .32, lokaal);
-  // trap naar de zolder, langs de rechtermuur
-  for (let i = 0; i < 8; i++) doos(.28, .07, .8, M.hout, ZR + 2.3 - i * .29, .52 + i * .24, ZN + .6, lokaal, false);
-  doos(2.5, .08, .06, M.hout, ZR + 1.2, 1.4, ZN + 1.02, lokaal, false).rotation.z = -.64;
+  // trap naar de zolder, links langs de muur met de tv
+  for (let i = 0; i < 8; i++) doos(.28, .07, .85, M.hout, ZR + 2.3 - i * .29, .52 + i * .24, ZZ - .55, lokaal, false);
+  for (const dz of [-.12, -.98]) doos(2.7, .1, .06, M.hout, ZR + 1.2, 1.35, ZZ + dz, lokaal, false).rotation.z = -.64;
+  doos(2.7, .06, .06, M.hout, ZR + 1.2, 2.25, ZZ - 1, lokaal, false).rotation.z = -.64; // leuning
   // lamp in het lokaal (zichtbaar als het donker wordt)
   const lamp = new THREE.PointLight('#FFD9A8', 0, 14, 1.6); lamp.position.set(LX, 3.1, LZ); lokaal.add(lamp);
   lokaal.userData.lamp = lamp;
@@ -1163,7 +1176,7 @@ const frame = (nu) => {
     // camera altijd aan de kant van het open water (binnenkant van de vaarbaan), nooit in de bomen
     if (zij.x * (VAARBAAN.x - bp.x) + zij.z * (VAARBAAN.z - bp.z) < 0) zij.negate();
     const volg = bp.clone().addScaledVector(vooruit, -11).addScaledVector(zij, 13).add(new THREE.Vector3(0, 5, 0));
-    doelPos.lerp(volg, w); doelKijk.lerp(bp.clone().add(new THREE.Vector3(0, 2.6, 0)), w);
+    doelPos.lerp(volg, w); doelKijk.lerp(bp.clone().add(new THREE.Vector3(0, .8, 0)), w);
   }
   if (!rustig) {
     doelPos.x += Math.sin(klok * .11) * .25 * (stand.a === 'intro' ? 4 : 1); // heel rustig ademen, geen schommelen
