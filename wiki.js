@@ -273,8 +273,8 @@
       frag.appendChild(intro);
       var knoppen = el('div', 'agenda-filters');
       knoppen.setAttribute('role', 'group'); knoppen.setAttribute('aria-label', 'Laat zien');
-      var alle = el('button', 'tab', 'Alle prijzen'), wij = el('button', 'tab', W.eigenOnderdeel);
-      [alle, wij].forEach(function (k, i) { k.type = 'button'; k.setAttribute('aria-pressed', String(i === 0)); knoppen.appendChild(k); });
+      var alle = el('button', 'tab', 'Alle prijzen van VaDeDo'), wij = el('button', 'tab', W.eigenOnderdeel);
+      [wij, alle].forEach(function (k) { k.type = 'button'; knoppen.appendChild(k); });
       frag.appendChild(knoppen);
       var wrap = el('div', 'wiki-tabel kaag-tabel');
       var tabel = el('table');
@@ -305,6 +305,8 @@
         alle.setAttribute('aria-pressed', String(!alleenWij)); wij.setAttribute('aria-pressed', String(alleenWij));
         Array.prototype.forEach.call(tbody.children, function (tr) { tr.hidden = alleenWij && !tr.classList.contains('is-eigen'); });
       }
+      // eerst alleen de prijzen van De Nieuwe Vaart (als die er zijn)
+      kies(aantalEigen > 0);
       alle.addEventListener('click', function () { kies(false); });
       wij.addEventListener('click', function () { kies(true); });
       frag.appendChild(bron(W.kaagcup, 'Weet je een prijs die hier niet staat? Zet hem op de '));

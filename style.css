@@ -758,3 +758,4 @@ html.wereld-3d .aanboord{display:grid;position:fixed;inset:0;z-index:80;place-it
 .knop--licht-rand:hover{background:#fff;color:var(--blouw)}
 @media (max-width:600px){.wereld-knoppen{left:auto;right:12px;top:76px;bottom:auto;gap:6px}.wereld-knop{min-height:30px;padding:0 10px;font-size:.6rem}}
 @media print{.wereld,.wereld-knoppen,.aanboord,.wereld-label{display:none!important}}
+#kaagcup-prijzen{margin-top:30px}
