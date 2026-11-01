@@ -11,6 +11,7 @@
 
   var doek = document.getElementById('decor');
   if (!doek || !doek.getContext) return;
+  if (document.documentElement.classList.contains('wereld-3d')) return; // de 3D-wereld neemt het over
   var html = document.documentElement;
   var ctx = doek.getContext('2d');
   var modus = doek.getAttribute('data-modus') || 'klok'; // 'scroll' of 'klok'

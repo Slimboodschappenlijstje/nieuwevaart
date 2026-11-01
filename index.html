@@ -16,7 +16,7 @@
 <link rel="icon" type="image/png" href="img/favicon-64.png">
 <link rel="apple-touch-icon" href="img/logo-192.png">
 <meta property="og:image" content="https://nieuwevaart.onrender.com/img/og.png">
-<script>document.documentElement.classList.add('js');try{if(localStorage.getItem('nieuwevaart-eenvoudig')==='1')document.documentElement.classList.add('eenvoudig')}catch(e){}</script>
+<script>document.documentElement.classList.add('js');(function(){try{var c=document.createElement('canvas');if((c.getContext('webgl2')||c.getContext('webgl'))&&!/[?&]plat=1/.test(location.search))document.documentElement.classList.add('wereld-3d')}catch(e){}})();try{if(localStorage.getItem('nieuwevaart-eenvoudig')==='1')document.documentElement.classList.add('eenvoudig')}catch(e){}</script>
 <link rel="stylesheet" href="style.css">
 <script type="application/ld+json">
 {
@@ -45,6 +45,20 @@
 <body class="thuis">
 <a class="skiplink" href="#inhoud">Naar de inhoud</a>
 <div class="decor" aria-hidden="true"><canvas id="decor" data-modus="scroll"></canvas></div>
+<div class="wereld" id="wereld" aria-hidden="true"></div>
+<div class="aanboord" role="dialog" aria-label="Welkom">
+  <div class="aanboord__binnen">
+    <img class="aanboord__logo" src="img/logo-wit-192.png" width="72" height="72" alt="">
+    <p class="aanboord__boven">Scouting VaDeDo Leiderdorp</p>
+    <p class="aanboord__titel">De Nieuwe <em>Vaart.</em></p>
+    <p class="aanboord__tekst">Vlieg mee over ons terrein aan de Vadedoplas.</p>
+    <p class="aanboord__pct" aria-hidden="true">0%</p>
+    <div class="aanboord__knoppen">
+      <button class="knop knop--das" type="button" data-aanboord="stil">Kom aan boord</button>
+      <button class="knop knop--licht-rand" type="button" data-aanboord="geluid">Met geluid</button>
+    </div>
+  </div>
+</div>
 
 <header class="kop" id="kop">
   <div class="wrap kop__inner">
@@ -77,7 +91,7 @@
 
 <main id="inhoud">
 
-  <section class="held" id="top" aria-labelledby="titel" data-hoofdstuk="Intro">
+  <section class="held" id="top" aria-labelledby="titel" data-hoofdstuk="Intro" data-camera="intro">
     <div class="wrap">
       <div class="held__tekst">
         <p class="pil"><span class="pil__stip" aria-hidden="true"></span>Elke zaterdag vanaf 12.00 uur</p>
@@ -94,7 +108,7 @@
     <p class="scrollhint" aria-hidden="true">Scroll om verder te varen</p>
   </section>
 
-  <section class="sectie binnenkort" id="binnenkort" aria-labelledby="binnenkort-titel" data-hoofdstuk="Binnenkort">
+  <section class="sectie binnenkort" id="binnenkort" aria-labelledby="binnenkort-titel" data-hoofdstuk="Binnenkort" data-camera="plas">
     <div class="wrap">
       <div class="blad">
       <p class="label">Agenda</p>
@@ -107,9 +121,9 @@
     </div>
   </section>
 
-  <div class="doorkijk" aria-hidden="true"><p>Eind van de middag</p></div>
+  <div class="doorkijk" aria-hidden="true" data-camera="steiger"><p>De steiger met onze lelievletten</p></div>
 
-  <section class="sectie" id="zaterdag" aria-labelledby="zaterdag-titel" data-hoofdstuk="Zaterdag">
+  <section class="sectie" id="zaterdag" aria-labelledby="zaterdag-titel" data-hoofdstuk="Zaterdag" data-camera="zaterdag">
     <div class="wrap">
       <div class="blad">
       <div class="kolom-tekst">
@@ -160,9 +174,11 @@
     </div>
   </section>
 
-  <div class="doorkijk" aria-hidden="true"><p>Zonsondergang boven de plas</p></div>
+  <div class="doorkijk" aria-hidden="true" data-camera="troephuis"><p>Ons troephuis Onveranderd</p></div>
+  <div class="doorkijk doorkijk--kort" aria-hidden="true" data-camera="dak"></div>
+  <div class="doorkijk" aria-hidden="true" data-camera="lokaal"><p>Ons lokaal: De Nieuwe Vaart <span>vroeger het meisjeslokaal</span></p></div>
 
-  <section class="sectie" id="spullen" aria-labelledby="spullen-titel" data-hoofdstuk="Meenemen">
+  <section class="sectie" id="spullen" aria-labelledby="spullen-titel" data-hoofdstuk="Meenemen" data-camera="uit">
     <div class="wrap">
       <div class="blad">
       <div class="kolom-tekst">
@@ -216,7 +232,7 @@
     </div>
   </section>
 
-  <div class="doorkijk doorkijk--laatste" aria-hidden="true"><p>Toplicht aan. Welterusten!</p></div>
+  <div class="doorkijk doorkijk--laatste" aria-hidden="true" data-camera="nacht"><p>Toplicht aan. Welterusten!</p></div>
 
 </main>
 
@@ -246,6 +262,7 @@
 
 <script src="script.js"></script>
 <script src="scene.js"></script>
+<script type="module" src="wereld.js" onerror="document.documentElement.classList.remove('wereld-3d');var s=document.createElement('script');s.src='scene.js?2d';document.body.appendChild(s)"></script>
 <script src="agenda-instellingen.js"></script>
 <script src="agenda-ics.js"></script>
 <script src="agenda.js"></script>
